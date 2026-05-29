@@ -40,3 +40,6 @@ Thumbs.db
 # misc
 coverage/
 .cache/
+
+# typescript incremental build info
+tsconfig.tsbuildinfo
