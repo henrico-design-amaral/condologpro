@@ -1,14 +1,22 @@
 ﻿# TASKS — CondoLogPro
 
-## Backlog imediato
-
-### Fundação
+## Fundação
 
 - [x] Criar pasta raiz do projeto.
 - [x] Criar arquivos de controle.
 - [x] Inicializar Git local.
-- [ ] Criar PDR completo.
-- [ ] Criar prompts Claude Code.
+- [x] Criar PDR completo.
+- [x] Criar prompts Claude Code.
+- [x] Criar agentes Claude.
+- [x] Criar skills Claude.
+- [x] Criar documentação de arquitetura local-first.
+- [x] Criar plano de implementação do MVP.
+- [x] Criar checklist QA piloto.
+
+## Próximas tarefas
+
+- [ ] Criar repositório GitHub.
+- [ ] Subir branch main para GitHub.
 - [ ] Criar estrutura inicial Next.js.
 - [ ] Instalar dependências.
 - [ ] Configurar Prisma + SQLite.
@@ -18,7 +26,8 @@
 - [ ] Criar fluxo desktop admin.
 - [ ] Criar WhatsApp assistido.
 - [ ] Criar retirada digital.
-- [ ] Criar checklist de teste no condomínio.
+- [ ] Rodar QA operacional.
+- [ ] Testar acesso mobile na rede local.
 
 ## MVP Core
 

@@ -2,33 +2,46 @@
 
 ## Estado atual
 
-Fase: Fundação do projeto.
+Fase: Documentação operacional e prompts Claude Code.
 
-Status: Estrutura de controle criada. App ainda não iniciado.
+Status: Fundação criada. PDR, arquitetura, plano de implementação, prompts, agents e skills foram preparados. App ainda não iniciado.
 
 ## Caminho local
 
-`C:\Users\henri\Documents\04_PROJETOS_CONTEÚDO\01_ACTIVE\CondoLogPro`
+C:\Users\henri\Documents\04_PROJETOS_CONTEÚDO\01_ACTIVE\CondoLogPro
 
-## Objetivo da fase atual
+## Objetivo do projeto
 
-Criar a base documental e operacional do projeto antes de iniciar o código.
+Criar um MVP local-first para gestão de encomendas condominiais, validável em teste real controlado no condomínio.
 
-## Decisões iniciais
+## Fluxo-base
 
-- Produto: CondoLogPro.
-- Categoria: SaaS operacional condominial.
-- Primeira versão: local-first MVP.
-- Usuário principal mobile: portaria/administração recebendo encomendas.
-- Usuário principal desktop: administração/síndico.
-- Fluxo-base: recebimento de encomenda, foto da etiqueta, registro, aviso ao morador por WhatsApp e baixa na retirada.
-- Banco inicial: SQLite.
-- App: Next.js com TypeScript.
-- UI: Tailwind CSS + shadcn/ui.
-- ORM: Prisma.
-- Código: inglês.
-- Interface: português brasileiro.
+Portaria/administração recebe pacote > fotografa etiqueta > registra entrada > associa bloco/apto/morador > gera WhatsApp assistido > baixa retirada.
+
+## Decisões técnicas
+
+- Next.js App Router.
+- TypeScript.
+- Prisma.
+- SQLite no MVP.
+- Tailwind CSS + shadcn/ui.
+- Upload local.
+- WhatsApp assistido via wa.me.
+- OCR não bloqueante.
+- Mobile para portaria.
+- Desktop para administração.
+
+## Branch atual
+
+main
+
+## Último marco
+
+Fundação documental inicial criada no commit f1e5692.
 
 ## Próxima etapa
 
-Criar documentação detalhada do PDR e prompts Claude Code dentro de `docs/prompts`.
+Parte 3: criar repositório remoto no GitHub e/ou iniciar bootstrap técnico do app Next.js.
+
+Recomendação:
+Criar GitHub antes do bootstrap técnico para preservar histórico desde a documentação.
