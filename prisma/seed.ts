@@ -1,4 +1,4 @@
-import { PrismaClient, PackageEventType, PackageStatus, OperatorRole } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -10,7 +10,7 @@ const carriers = [
   "TikTok Shop",
   "Transportadora",
   "iFood Mercado"
-];
+] as const;
 
 const firstNames = [
   "Ana",
@@ -28,7 +28,7 @@ const firstNames = [
   "Renata",
   "Marcelo",
   "Larissa"
-];
+] as const;
 
 const lastNames = [
   "Silva",
@@ -41,10 +41,16 @@ const lastNames = [
   "Ferreira",
   "Lima",
   "Gomes"
-];
+] as const;
 
-function randomFrom<T>(items: T[]): T {
-  return items[Math.floor(Math.random() * items.length)];
+function randomFrom<T>(items: readonly T[]): T {
+  const item = items[Math.floor(Math.random() * items.length)];
+
+  if (!item) {
+    throw new Error("Cannot pick random item from empty array.");
+  }
+
+  return item;
 }
 
 function makePhone(index: number) {
@@ -82,17 +88,17 @@ async function main() {
       {
         organizationId: organization.id,
         name: "Administração",
-        role: OperatorRole.ADMIN
+        role: "ADMIN"
       },
       {
         organizationId: organization.id,
         name: "Portaria Principal",
-        role: OperatorRole.FRONT_DESK
+        role: "FRONT_DESK"
       },
       {
         organizationId: organization.id,
         name: "Síndico Demo",
-        role: OperatorRole.MANAGER
+        role: "MANAGER"
       }
     ]
   });
@@ -110,7 +116,6 @@ async function main() {
     buildings.push(building);
   }
 
-  const units = [];
   let residentCounter = 1;
 
   for (const building of buildings) {
@@ -126,8 +131,6 @@ async function main() {
             label: `${building.label} / Apto ${number}`
           }
         });
-
-        units.push(unit);
 
         const residentsCount = floor % 2 === 0 ? 3 : 2;
 
@@ -160,25 +163,30 @@ async function main() {
     }
   });
 
+  if (residents.length === 0) {
+    throw new Error("Seed failed: no residents were created.");
+  }
+
   for (let index = 1; index <= 30; index++) {
     const resident = randomFrom(residents);
+
     const status =
       index <= 12
-        ? PackageStatus.PENDING
+        ? "PENDING"
         : index <= 22
-          ? PackageStatus.NOTIFIED
-          : PackageStatus.PICKED_UP;
+          ? "NOTIFIED"
+          : "PICKED_UP";
 
     const receivedAt = new Date();
     receivedAt.setHours(receivedAt.getHours() - index);
 
     const notifiedAt =
-      status === PackageStatus.NOTIFIED || status === PackageStatus.PICKED_UP
+      status === "NOTIFIED" || status === "PICKED_UP"
         ? new Date(receivedAt.getTime() + 5 * 60 * 1000)
         : null;
 
     const pickedUpAt =
-      status === PackageStatus.PICKED_UP
+      status === "PICKED_UP"
         ? new Date(receivedAt.getTime() + 4 * 60 * 60 * 1000)
         : null;
 
@@ -203,7 +211,7 @@ async function main() {
       data: {
         organizationId: organization.id,
         packageId: pkg.id,
-        type: PackageEventType.PACKAGE_RECEIVED,
+        type: "PACKAGE_RECEIVED",
         message: `Encomenda ${pkg.packageCode} recebida para ${resident.unit.building.label}, apto ${resident.unit.number}.`
       }
     });
@@ -213,7 +221,7 @@ async function main() {
         data: {
           organizationId: organization.id,
           packageId: pkg.id,
-          type: PackageEventType.PACKAGE_NOTIFIED,
+          type: "PACKAGE_NOTIFIED",
           message: `Morador ${resident.name} notificado por WhatsApp assistido.`,
           createdAt: notifiedAt
         }
@@ -225,7 +233,7 @@ async function main() {
         data: {
           organizationId: organization.id,
           packageId: pkg.id,
-          type: PackageEventType.PACKAGE_PICKED_UP,
+          type: "PACKAGE_PICKED_UP",
           message: `Encomenda retirada por ${resident.name}.`,
           createdAt: pickedUpAt
         }
