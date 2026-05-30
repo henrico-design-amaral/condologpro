@@ -43,3 +43,7 @@ coverage/
 
 # typescript incremental build info
 tsconfig.tsbuildinfo
+
+# local database
+prisma/dev.db
+prisma/dev.db-journal
