@@ -1,4 +1,4 @@
-﻿# TASKS — CondoLogPro
+# TASKS — CondoLogPro
 
 ## Fundação
 
@@ -13,36 +13,51 @@
 - [x] Criar plano de implementação do MVP.
 - [x] Criar checklist QA piloto.
 
-## Próximas tarefas
+## Bootstrap técnico
 
-- [ ] Criar repositório GitHub.
-- [ ] Subir branch main para GitHub.
-- [ ] Criar estrutura inicial Next.js.
-- [ ] Instalar dependências.
-- [ ] Configurar Prisma + SQLite.
-- [ ] Criar schema inicial.
-- [ ] Criar seed data.
-- [ ] Criar fluxo mobile de recebimento.
-- [ ] Criar fluxo desktop admin.
-- [ ] Criar WhatsApp assistido.
-- [ ] Criar retirada digital.
-- [ ] Rodar QA operacional.
+- [x] Criar estrutura inicial Next.js.
+- [x] Instalar dependências.
+- [x] Configurar Prisma + SQLite.
+- [x] Criar schema inicial.
+- [x] Criar seed data.
+- [x] Criar fluxo mobile de recebimento.
+- [x] Criar fluxo desktop admin.
+- [x] Criar WhatsApp assistido.
+- [x] Criar retirada digital.
+- [ ] Rodar QA operacional manual completo.
 - [ ] Testar acesso mobile na rede local.
+
+## Cloud-ready MVP
+
+- [x] Criar branch `infra/supabase-vercel-camera-mvp`.
+- [x] Adicionar variáveis Supabase em `.env.example`.
+- [x] Criar `prisma/schema.supabase.prisma` para PostgreSQL.
+- [x] Criar scripts Prisma Supabase.
+- [x] Criar `src/lib/storage.ts`.
+- [x] Implementar fallback local de storage.
+- [x] Preparar upload Supabase Storage quando variáveis reais existirem.
+- [x] Criar `docs/implementation/SUPABASE_VERCEL_SETUP.md`.
+- [x] Criar `docs/implementation/CAMERA_CAPTURE_CORE_FLOW.md`.
+- [ ] Criar projeto Supabase real.
+- [ ] Criar bucket Supabase real.
+- [ ] Configurar variáveis reais na Vercel.
+- [ ] Validar conexão cloud real.
 
 ## MVP Core
 
-- [ ] Cadastro de condomínio demo.
-- [ ] Cadastro de blocos.
-- [ ] Cadastro de apartamentos.
-- [ ] Cadastro de moradores.
+- [x] Cadastro de condomínio demo.
+- [x] Cadastro de blocos.
+- [x] Cadastro de apartamentos.
+- [x] Cadastro de moradores.
 - [ ] Importação CSV/XLSX.
-- [ ] Registro de encomenda.
-- [ ] Upload/foto da etiqueta.
-- [ ] Associação com morador.
-- [ ] Mensagem WhatsApp pronta.
-- [ ] Lista de encomendas pendentes.
-- [ ] Baixa de retirada.
-- [ ] Histórico de eventos.
+- [x] Registro de encomenda.
+- [x] Upload/foto da etiqueta.
+- [x] Associação com morador por autocomplete.
+- [x] Mensagem WhatsApp pronta.
+- [x] Lista de encomendas pendentes.
+- [x] Baixa de retirada.
+- [x] Histórico de eventos.
+- [x] OCR experimental não bloqueante.
 
 ## Fora de escopo no MVP
 

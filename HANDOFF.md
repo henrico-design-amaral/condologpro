@@ -1,47 +1,48 @@
-﻿# HANDOFF — CondoLogPro
+# HANDOFF — CondoLogPro
 
 ## Último estado conhecido
 
-Projeto local criado e Git inicializado.
+Branch atual: `infra/supabase-vercel-camera-mvp`.
 
-Branch atual: main.
+O projeto agora possui app Next.js funcional com:
 
-Commit inicial:
-f1e5692 docs: initialize condologpro project foundation
-
-## Estado após Parte 2
-
-Foram preparados:
-
-- PDR completo local-first;
-- arquitetura local-first;
-- plano de implementação do MVP;
-- checklist QA piloto;
-- prompts Claude Code;
-- agents Claude;
-- skills Claude;
-- arquivos de controle atualizados.
+- Prisma/SQLite local;
+- schema Supabase/PostgreSQL separado;
+- seed com condomínio demo, blocos, unidades, moradores, encomendas e eventos;
+- telefones seeded de moradores como `+55 11 953970704`;
+- fluxo `/mobile/intake` com câmera direta, captura por arquivo, OCR experimental e autocomplete;
+- upload de etiqueta local ou Supabase Storage conforme variáveis;
+- `/mobile/pending` com lista real;
+- `/mobile/package/[id]` com baixa de retirada;
+- `/admin`, `/admin/packages` e `/admin/residents` conectados ao banco;
+- documentação Supabase/Vercel e câmera.
 
 ## Contexto essencial
 
-CondoLogPro é um MVP local-first para gestão de encomendas condominiais.
+CondoLogPro é um MVP para logística de encomendas, não um app genérico de condomínio.
 
-O fluxo real de referência é:
+O fluxo real de referência continua:
 
 1. Portaria/administração recebe encomenda.
-2. Hoje os dados são registrados em caderno físico.
-3. Administração envia WhatsApp manual para o morador principal.
-4. Na retirada, o morador informa dados e assina em caderno.
-5. O sistema deve digitalizar esse fluxo sem mudar a rotina.
+2. Operador fotografa etiqueta.
+3. Operador confirma morador/unidade.
+4. Sistema registra encomenda.
+5. Sistema gera WhatsApp assistido.
+6. Encomenda aparece em pendentes.
+7. Operador baixa retirada.
+8. Admin consulta registros e histórico.
 
-## Próxima ação recomendada
+## O que depende do usuário
 
-Criar repositório GitHub e subir main.
-
-Depois iniciar bootstrap técnico com Claude Code usando:
-
-docs/prompts/CLAUDE_CODE_MASTER_PROMPT.md
+- Criar ou confirmar repositório GitHub remoto.
+- Criar projeto Supabase.
+- Criar bucket `package-labels`.
+- Configurar variáveis reais no Supabase/Vercel.
+- Rodar comandos cloud documentados em `docs/implementation/SUPABASE_VERCEL_SETUP.md`.
 
 ## Atenção
 
-Não expandir para manutenção, comunicados, reservas ou app genérico de condomínio antes do fluxo de encomendas funcionar.
+- Não há credenciais Supabase reais neste ambiente.
+- Não afirmar validação cloud antes de testar com `DATABASE_URL`, `DIRECT_URL` e bucket reais.
+- Manter fallback local e manual.
+- Não adicionar billing, WhatsApp Cloud API ou módulos genéricos antes do fluxo de encomendas estar validado.

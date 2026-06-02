@@ -53,9 +53,8 @@ function randomFrom<T>(items: readonly T[]): T {
   return item;
 }
 
-function makePhone(index: number) {
-  const suffix = String(10000000 + index).slice(-8);
-  return `119${suffix}`;
+function makePhone() {
+  return "+55 11 953970704";
 }
 
 function makeResidentName(index: number) {
@@ -140,7 +139,7 @@ async function main() {
               organizationId: organization.id,
               unitId: unit.id,
               name: makeResidentName(residentCounter),
-              phone: makePhone(residentCounter),
+              phone: makePhone(),
               isPrimary: residentIndex === 1,
               notes: residentIndex === 1 ? "Morador principal" : null,
               isActive: true

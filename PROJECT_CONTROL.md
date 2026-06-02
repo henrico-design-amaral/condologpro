@@ -1,10 +1,10 @@
-﻿# PROJECT CONTROL — CondoLogPro
+# PROJECT CONTROL — CondoLogPro
 
 ## Estado atual
 
-Fase: Documentação operacional e prompts Claude Code.
+Fase: MVP local-first evoluindo para cloud-ready.
 
-Status: Fundação criada. PDR, arquitetura, plano de implementação, prompts, agents e skills foram preparados. App ainda não iniciado.
+Status: App Next.js bootstrapado com Prisma/SQLite, seed, fluxo mobile de recebimento, câmera com fallback, autocomplete de moradores, upload de etiqueta, WhatsApp assistido, pendentes, baixa de retirada e admin desktop básico.
 
 ## Caminho local
 
@@ -12,36 +12,35 @@ C:\Users\henri\Documents\04_PROJETOS_CONTEÚDO\01_ACTIVE\CondoLogPro
 
 ## Objetivo do projeto
 
-Criar um MVP local-first para gestão de encomendas condominiais, validável em teste real controlado no condomínio.
+Criar um MVP de gestão de encomendas condominiais validável em condomínio real, preservando o fluxo local-first e preparando implantação simples em Supabase/Vercel.
 
 ## Fluxo-base
 
-Portaria/administração recebe pacote > fotografa etiqueta > registra entrada > associa bloco/apto/morador > gera WhatsApp assistido > baixa retirada.
+Portaria/administração recebe pacote > fotografa etiqueta > registra entrada > associa bloco/apto/morador > gera WhatsApp assistido > acompanha pendentes > baixa retirada > admin consulta histórico.
 
 ## Decisões técnicas
 
 - Next.js App Router.
 - TypeScript.
 - Prisma.
-- SQLite no MVP.
-- Tailwind CSS + shadcn/ui.
-- Upload local.
-- WhatsApp assistido via wa.me.
-- OCR não bloqueante.
+- SQLite como padrão local.
+- Schema PostgreSQL separado para Supabase em `prisma/schema.supabase.prisma`.
+- Tailwind CSS + shadcn/ui base.
+- Upload local como fallback.
+- Supabase Storage preparado por `src/lib/storage.ts`.
+- WhatsApp assistido via `wa.me`.
+- OCR experimental com `tesseract.js`, não bloqueante.
 - Mobile para portaria.
 - Desktop para administração.
 
 ## Branch atual
 
-main
+infra/supabase-vercel-camera-mvp
 
 ## Último marco
 
-Fundação documental inicial criada no commit f1e5692.
+Preparação cloud-ready e câmera-first iniciada na branch `infra/supabase-vercel-camera-mvp`.
 
 ## Próxima etapa
 
-Parte 3: criar repositório remoto no GitHub e/ou iniciar bootstrap técnico do app Next.js.
-
-Recomendação:
-Criar GitHub antes do bootstrap técnico para preservar histórico desde a documentação.
+Rodar validações completas, testar manualmente as rotas mobile/admin, configurar Supabase/Vercel reais e validar cloud com credenciais reais.
