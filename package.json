@@ -12,10 +12,15 @@
         "prisma:validate": "prisma validate",
         "prisma:generate": "prisma generate",
         "prisma:push": "prisma db push",
+        "prisma:seed": "tsx prisma/seed.ts",
+        "db:validate": "prisma validate",
+        "db:generate": "prisma generate",
+        "db:push": "prisma db push",
+        "db:seed": "tsx prisma/seed.ts",
+        "db:reset": "prisma db push --force-reset && tsx prisma/seed.ts",
         "prisma:supabase:validate": "prisma validate --schema prisma/schema.supabase.prisma",
         "prisma:supabase:generate": "prisma generate --schema prisma/schema.supabase.prisma",
-        "prisma:supabase:push": "prisma db push --schema prisma/schema.supabase.prisma",
-        "prisma:seed": "tsx prisma/seed.ts"
+        "prisma:supabase:push": "prisma db push --schema prisma/schema.supabase.prisma"
     },
     "dependencies": {
         "@hookform/resolvers": "^5.4.0",
