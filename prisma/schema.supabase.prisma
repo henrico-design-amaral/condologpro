@@ -1,0 +1,162 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum PackageStatus {
+  PENDING
+  NOTIFIED
+  PICKED_UP
+  CANCELLED
+}
+
+enum PackageEventType {
+  PACKAGE_RECEIVED
+  PACKAGE_NOTIFIED
+  PACKAGE_PICKED_UP
+  PACKAGE_UPDATED
+  PACKAGE_CANCELLED
+}
+
+enum OperatorRole {
+  ADMIN
+  FRONT_DESK
+  MANAGER
+}
+
+model Organization {
+  id            String   @id @default(cuid())
+  name          String
+  address       String?
+  whatsappPhone String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  buildings     Building[]
+  units         Unit[]
+  residents     Resident[]
+  operators     Operator[]
+  packages      Package[]
+  packageEvents PackageEvent[]
+}
+
+model Building {
+  id             String   @id @default(cuid())
+  organizationId String
+  label          String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  units        Unit[]
+
+  @@unique([organizationId, label])
+  @@index([organizationId])
+}
+
+model Unit {
+  id             String   @id @default(cuid())
+  organizationId String
+  buildingId     String
+  number         String
+  label          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  building     Building     @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+  residents    Resident[]
+  packages     Package[]
+
+  @@unique([buildingId, number])
+  @@index([organizationId])
+  @@index([buildingId])
+}
+
+model Resident {
+  id             String   @id @default(cuid())
+  organizationId String
+  unitId         String
+  name           String
+  phone          String?
+  isPrimary      Boolean  @default(false)
+  notes          String?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  unit         Unit         @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  packages     Package[]
+
+  @@index([organizationId])
+  @@index([unitId])
+  @@index([phone])
+}
+
+model Operator {
+  id             String       @id @default(cuid())
+  organizationId String
+  name           String
+  role           OperatorRole @default(FRONT_DESK)
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+}
+
+model Package {
+  id                 String        @id @default(cuid())
+  organizationId     String
+  unitId             String
+  residentId         String?
+  packageCode        String?
+  carrier            String?
+  labelPhotoUrl      String?
+  status             PackageStatus @default(PENDING)
+  notes              String?
+  receivedAt         DateTime      @default(now())
+  notifiedAt         DateTime?
+  pickedUpAt         DateTime?
+  pickedUpByName     String?
+  pickedUpByDocument String?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  organization Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  unit         Unit           @relation(fields: [unitId], references: [id], onDelete: Restrict)
+  resident     Resident?      @relation(fields: [residentId], references: [id], onDelete: SetNull)
+  events       PackageEvent[]
+
+  @@index([organizationId])
+  @@index([unitId])
+  @@index([residentId])
+  @@index([status])
+  @@index([receivedAt])
+}
+
+model PackageEvent {
+  id             String           @id @default(cuid())
+  organizationId String
+  packageId      String
+  type           PackageEventType
+  message        String
+  metadata       String?
+  createdAt      DateTime         @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  package      Package      @relation(fields: [packageId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([packageId])
+  @@index([type])
+  @@index([createdAt])
+}
