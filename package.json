@@ -2,7 +2,7 @@
     "name": "condologpro",
     "version": "0.1.0",
     "private": true,
-    "description": "Local-first MVP for condominium package management.",
+    "description": "Cloud-ready MVP for condominium package management with local fallback.",
     "scripts": {
         "dev": "next dev",
         "dev:host": "next dev -H 0.0.0.0",
@@ -20,7 +20,9 @@
         "db:reset": "prisma db push --force-reset && tsx prisma/seed.ts",
         "prisma:supabase:validate": "prisma validate --schema prisma/schema.supabase.prisma",
         "prisma:supabase:generate": "prisma generate --schema prisma/schema.supabase.prisma",
-        "prisma:supabase:push": "prisma db push --schema prisma/schema.supabase.prisma"
+        "prisma:supabase:push": "prisma db push --schema prisma/schema.supabase.prisma",
+        "prisma:supabase:seed": "tsx prisma/seed.ts",
+        "prisma:supabase:studio": "prisma studio --schema prisma/schema.supabase.prisma"
     },
     "dependencies": {
         "@hookform/resolvers": "^5.4.0",

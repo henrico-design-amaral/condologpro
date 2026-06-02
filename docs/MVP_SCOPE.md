@@ -2,14 +2,23 @@
 
 ## Visão
 
-Software **offline-first** para condomínios pequenos e médios registrarem a **entrada, notificação e retirada de encomendas** na portaria, com foto da etiqueta, autocomplete de moradores e um painel administrativo desktop.
+**Cloud-ready MVP** com **fallback local** para condomínios pequenos e médios registrarem a **entrada, notificação e retirada de encomendas** na portaria, com foto da etiqueta, autocomplete de moradores e um painel administrativo desktop.
 
-> Princípio: **rodar 100% local** (SQLite + uploads em `public/uploads`), sem dependência de serviços externos para o MVP.
+> **Direção estratégica:** deploy padrão em **Vercel** + **Supabase Postgres** + **Supabase Storage**. O modo local (SQLite + `public/uploads`) é preservado para desenvolvimento, pilotos offline e contingência.
 
 ## Personas
 
 - **Porteiro (mobile)**: registra a entrada da encomenda, tira foto da etiqueta, busca o morador, dispara o aviso (WhatsApp assistido) e baixa a retirada.
 - **Síndico / administradora (admin desktop)**: consulta histórico, importa a base de moradores, audita o turno e gerencia o condomínio.
+
+## Modos de operação
+
+| Modo | Banco | Storage | Quando usar |
+| --- | --- | --- | --- |
+| **cloud (default)** | Supabase Postgres (`DATABASE_URL` pooled, `DIRECT_URL` para migrations) | Supabase Storage (`SUPABASE_STORAGE_BUCKET`) | Vercel preview, produção, piloto cloud |
+| **local-fallback** | SQLite (`file:./dev.db`) | `public/uploads` | Desenvolvimento, piloto offline, validação sem credenciais |
+
+> O modo é decidido por variáveis de ambiente. O código não finge conexão cloud sem credenciais reais.
 
 ## Fora de escopo (MVP)
 
@@ -18,7 +27,7 @@ Software **offline-first** para condomínios pequenos e médios registrarem a **
 - Integração nativa com WhatsApp Cloud API.
 - OCR obrigatório na nuvem.
 - Reconhecimento facial ou biometria.
-- Multi-condomínio simultâneo (a estrutura suporta, mas o MVP opera em **um** condomínio ativo).
+- Multi-condomínio simultâneo em produção (a estrutura suporta, mas o MVP opera em **um** condomínio ativo).
 - Substituição da planilha para grandes operações (acima de ~500 unidades/dia).
 
 ## Funcionalidades no MVP
@@ -38,17 +47,31 @@ Software **offline-first** para condomínios pequenos e médios registrarem a **
 
 ## Critérios de aceite do MVP
 
-- `npm run typecheck` e `npm run build` passam em CI.
+### Locais (CI)
+- `npm run prisma:validate` passa.
+- `npm run typecheck` passa.
+- `npm run build` passa (16/16 páginas estáticas).
 - `npm run db:seed` popula 5 buildings, 50 units, 120 residents e 32 encomendas com mix de status.
-- O porteiro consegue registrar uma encomenda, gerar o link de WhatsApp e dar baixa em **menos de 90 segundos** em fluxo guiado.
+
+### Cloud (manuais, com credenciais reais)
+- Build na Vercel concluído a partir do branch `main` (ou branch de release).
+- `prisma db push` contra Supabase Postgres executa sem erro.
+- Upload de etiqueta contra Supabase Storage retorna URL pública (bucket público) ou URL assinada (bucket privado).
+- O porteiro consegue registrar uma encomenda, gerar o link de WhatsApp e dar baixa em **menos de 90 segundos**.
+
+### Produto
 - O admin consegue filtrar atrasadas (>24h), abrir o histórico completo e exportar a base.
-- A tela de portaria funciona **offline** após o primeiro carregamento (PWA-ready, sem chamadas bloqueantes).
+- A tela de portaria funciona com rede instável (UX tolerante a falhas; upload e notificação são reexecutáveis).
 
 ## Stack travada
 
 - **Next.js 16 (App Router) + TypeScript strict + Tailwind**.
-- **Prisma 7** com **SQLite** local (`prisma/dev.db`).
+- **Prisma 6/7** com **dois schemas**:
+  - `prisma/schema.prisma` → SQLite (local).
+  - `prisma/schema.supabase.prisma` → PostgreSQL (cloud).
 - **lucide-react** para ícones.
 - **tesseract.js** carregado dinamicamente no cliente, sem custo fixo de bundle.
 - **Zod** em endpoints sensíveis.
-- `public/uploads` para fotos de etiqueta (storage local; adapter para Supabase Storage fica fora do MVP).
+- **Vercel** para hosting e preview deploys.
+- **GitHub Actions** para CI (typecheck + build, sem credenciais Supabase).
+- **Supabase Storage** com fallback para `public/uploads`.

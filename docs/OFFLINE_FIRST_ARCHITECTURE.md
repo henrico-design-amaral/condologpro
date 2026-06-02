@@ -1,34 +1,55 @@
-# Offline-First Architecture
+# Cloud-Ready Architecture (with Local Fallback)
 
 ## Princípios
 
-1. **Local é a fonte primária.** O app deve funcionar mesmo sem rede, lendo e escrevendo contra `prisma/dev.db` e `public/uploads`.
-2. **Sem dependência externa no caminho feliz.** OCR, uploads e busca de morador rodam no próprio processo do Next.js.
-3. **Reconciliação é optativa.** Tudo o que tocar rede (Supabase Storage, WhatsApp Cloud) é um *enhancement* plugado depois, nunca um pré-requisito.
+1. **Cloud é o alvo.** O deploy padrão é Vercel + Supabase Postgres + Supabase Storage. O código de aplicação é o mesmo nos dois modos.
+2. **Local é o fallback.** Desenvolvimento, pilotos offline e contingência rodam em SQLite + `public/uploads` sem dependência de serviços externos.
+3. **Nenhuma dependência externa bloqueia o caminho feliz.** OCR, upload e busca de morador funcionam localmente; cloud só é consultado quando há credenciais reais.
+4. **Reconciliação é optativa.** Tudo o que tocar rede (Supabase Storage signed URL, WhatsApp Cloud) é um *enhancement* plugado depois, nunca um pré-requisito.
+
+## Decisão de modo
+
+O modo é decidido por **variáveis de ambiente** no deploy:
+
+| Variável | Ausente | Presente (valor típico) |
+| --- | --- | --- |
+| `DATABASE_URL` | — | `postgresql://…pooler…/postgres?pgbouncer=true` (cloud) ou `file:./dev.db` (local) |
+| `DIRECT_URL` | — | `postgresql://…/postgres` (apenas cloud) |
+| `NEXT_PUBLIC_SUPABASE_URL` | — | `https://[project-ref].supabase.co` |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | — | chave anon (apenas cloud) |
+| `SUPABASE_SERVICE_ROLE_KEY` | — | service role (server-side apenas) |
+| `SUPABASE_STORAGE_BUCKET` | — | `package-labels` |
+| `SUPABASE_STORAGE_PUBLIC` | comportamento padrão (público) | `true` força público; `false` força privado (signed URLs) |
+
+> **Sem credenciais Supabase**: o app usa SQLite (precisa de `schema.prisma` como default) e grava fotos em `public/uploads`.
+> **Com credenciais Supabase**: o app usa Postgres e Supabase Storage. O helper `src/lib/storage.ts` detecta as variáveis e escolhe o caminho.
 
 ## Camadas
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
 │  UI (Next.js App Router, RSC + Client)                       │
-│  ├── /mobile/*  → fluxo do porteiro (dark, offline-first)    │
+│  ├── /mobile/*  → fluxo do porteiro (dark, mobile-first)     │
 │  └── /admin/*   → fluxo do síndico (light, denso)            │
 ├──────────────────────────────────────────────────────────────┤
 │  Server actions / Route Handlers                             │
 │  ├── /api/packages, /api/residents/search                    │
 │  ├── /api/packages/[id]/{notify,pickup}                      │
-│  ├── /api/upload/label → /public/uploads/...                 │
+│  ├── /api/upload/label → Supabase Storage OU public/uploads  │
 │  └── /api/import/residents → CSV preview + commit            │
 ├──────────────────────────────────────────────────────────────┤
 │  Domain libs                                                 │
 │  ├── stats.ts     → métricas, OVERDUE_THRESHOLD_HOURS = 24   │
 │  ├── format.ts    → datas, horas relativas, números          │
 │  ├── whatsapp.ts  → montagem de wa.me + mensagens prontas    │
+│  ├── storage.ts   → local + Supabase (public + signed URL)   │
 │  └── import-csv.ts→ parser, validação, template              │
 ├──────────────────────────────────────────────────────────────┤
-│  Prisma 7 (SQLite)                                           │
-│  Organization, Building, Unit, Resident, Package,            │
-│  PackageEvent, Operator                                      │
+│  Prisma                                                       │
+│  ├── schema.prisma            (SQLite — local default)       │
+│  └── schema.supabase.prisma   (PostgreSQL — cloud)           │
+│  Modelos: Organization, Building, Unit, Resident, Package,   │
+│  PackageEvent, Operator                                       │
 └──────────────────────────────────────────────────────────────┘
 ```
 
@@ -47,7 +68,7 @@
 ## Fluxos críticos
 
 ### 1. Entrada da encomenda (`/mobile/intake`)
-1. Foto da etiqueta (`/api/upload/label` grava em `public/uploads/...jpg`).
+1. Foto da etiqueta — `src/lib/storage.ts` decide entre Supabase Storage e `public/uploads`.
 2. OCR opcional (tesseract.js carregado dinamicamente) extrai código, transportadora, apto.
 3. Autocomplete de morador (`/api/residents/search?q=...`).
 4. `POST /api/packages` cria Package + PackageEvent (`PACKAGE_RECEIVED`) em transação.
@@ -65,14 +86,34 @@
 - `isPackageOverdue(pkg)` + `overdueThresholdDate()` padronizam o cálculo.
 - Lista mobile e dashboard admin destacam visualmente.
 
-## Storage híbrido (preparado, não ativo no MVP)
+## Storage: local vs Supabase
 
-- `src/lib/storage.ts` já isola a escrita entre `public/uploads` (default) e Supabase Storage (opt-in por env). O MVP usa o caminho local.
-- A escolha por local evita custo fixo, latência de upload na portaria e dependência de chaves para o primeiro piloto.
+`src/lib/storage.ts` é o ponto único de decisão:
+
+```ts
+// detecta config do Supabase Storage
+const config = getSupabaseStorageConfig();
+
+// se ausente → grava em public/uploads
+// se presente → upload via REST /storage/v1/object/{bucket}/{path}
+```
+
+- **Bucket público** (`SUPABASE_STORAGE_PUBLIC=true` ou default): retorna URL pública `/storage/v1/object/public/{bucket}/{path}`. Ideal para fotos que precisam aparecer direto na UI.
+- **Bucket privado** (`SUPABASE_STORAGE_PUBLIC=false`): use `createSignedLabelUrl(path, ttl)` server-side para gerar URL temporária (default 10 min). A UI nunca recebe a service role key.
+- **Validação** (sempre): jpeg/png/webp, ≤ 8 MB, path `labels/YYYY-MM-DD/{uuid}.{ext}`.
+
+> **Limitação conhecida**: a UI atual consome a URL pública retornada por `storeLabelPhoto`. Para bucket privado, é preciso passar a URL por um endpoint de leitura (`/api/upload/label/[...path]`) que chama `createSignedLabelUrl`. Está documentado em `docs/implementation/CLOUD_READY_FOUNDATION.md`.
+
+## CI (GitHub Actions)
+
+- Dispara em push e PR para `main` e `mvp/**`.
+- Roda `prisma:validate`, `prisma:generate`, `typecheck`, `build` contra SQLite (sem credenciais Supabase).
+- Cloud validation contra Supabase real **permanece manual** até que secrets sejam configurados em GitHub.
 
 ## Decisões deliberadamente adiadas
 
-- **PWA manifest / service worker**: estrutura já permite, mas não é gerado no MVP para não esconder complexidade.
-- **Sync multi-dispositivo**: exigiria backend; não cabe no MVP offline-first.
+- **PWA manifest / service worker**: estrutura já permite; fica para próxima iteração.
+- **Multi-tenant SaaS completo**: o schema suporta, mas a UI opera em um condomínio por vez.
 - **OCR na nuvem (Google Vision, etc.)**: substituído por heurística local + tesseract.js quando disponível.
 - **WhatsApp Cloud API**: o MVP usa `wa.me` manual; integração fica em fase posterior.
+- **Migrations versionadas**: enquanto o MVP evolui rápido, `prisma db push` é aceitável. Migrar para `prisma migrate dev` quando a estrutura estabilizar.
