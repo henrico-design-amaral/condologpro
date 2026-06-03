@@ -5,10 +5,12 @@ on:
     branches:
       - main
       - "mvp/**"
+      - "fix/**"
   pull_request:
     branches:
       - main
       - "mvp/**"
+      - "fix/**"
 
 jobs:
   build:
@@ -35,6 +37,15 @@ jobs:
 
       - name: Generate Prisma client (SQLite)
         run: npm run prisma:generate
+
+      - name: Initialize local SQLite file
+        run: mkdir -p prisma && touch prisma/dev.db
+
+      - name: Apply Prisma schema to local SQLite
+        run: npm run prisma:push
+
+      - name: Seed local SQLite
+        run: npm run prisma:seed
 
       - name: Typecheck
         run: npm run typecheck

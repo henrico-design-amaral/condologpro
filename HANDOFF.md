@@ -2,7 +2,7 @@
 
 ## Último estado conhecido
 
-Branch atual: `mvp/cloud-ready-foundation` (anteriormente `mvp/offline-first-foundation`).
+Branch atual: `fix/ci-database-build` (base: `mvp/cloud-ready-foundation` após PR #4).
 
 O projeto está **cloud-ready com fallback local**:
 
@@ -17,7 +17,8 @@ O projeto está **cloud-ready com fallback local**:
 - `/mobile/package/[id]` com baixa de retirada, notificação via WhatsApp assistido e timeline.
 - `/admin` com KPIs, `/admin/packages`, `/admin/history`, `/admin/residents`, `/admin/import`, `/admin/settings`.
 - Importador CSV com `preview` e `commit` (Zod).
-- CI no GitHub Actions rodando typecheck + build, sem secrets Supabase.
+- CI no GitHub Actions rodando **`prisma:validate` → `prisma:generate` → `prisma:push` → `prisma:seed` → `typecheck` → `build`**. O CI cria e popula o SQLite local antes do build, evitando o erro "table main.Package does not exist" no prerender.
+- Páginas DB-backed marcadas como `force-dynamic` para refletir dados em tempo real e desacoplar o build do estado da seed.
 - `vercel.json` no root para deploy.
 - Documentação completa em `docs/MVP_SCOPE.md`, `docs/OFFLINE_FIRST_ARCHITECTURE.md`, `docs/PRODUCT_DECISIONS.md`, `docs/VALIDATION_PLAN.md`, `docs/BENCHMARK_NOTES.md`, `docs/IMPLEMENTATION_LOG.md`, `docs/implementation/CLOUD_READY_FOUNDATION.md`, `docs/implementation/SUPABASE_VERCEL_SETUP.md`, `docs/implementation/CAMERA_CAPTURE_CORE_FLOW.md`.
 

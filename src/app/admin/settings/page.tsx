@@ -4,6 +4,8 @@ import { Building2, MapPin, MessageCircle, Phone } from "lucide-react";
 
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
 async function updateOrganization(formData: FormData) {
   "use server";
 

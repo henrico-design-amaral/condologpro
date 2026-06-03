@@ -4,6 +4,8 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { overdueThresholdDate } from "@/lib/stats";
 
+export const dynamic = "force-dynamic";
+
 export default async function MobileHomePage() {
   const startOfDay = new Date(new Date().setHours(0, 0, 0, 0));
   const [pendingCount, notifiedCount, todayCount, pickedUpTodayCount, overdueCount] = await Promise.all([

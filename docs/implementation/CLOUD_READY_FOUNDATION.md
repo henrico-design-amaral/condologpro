@@ -17,10 +17,17 @@
 
 ### 1.3. CI básica no GitHub Actions
 - `.github/workflows/ci.yml` roda em push e PR para `main` e `mvp/**`.
-- Steps: `prisma:validate` → `prisma:generate` → `typecheck` → `build`.
-- Não exige secrets Supabase.
+- Steps: `prisma:validate` → `prisma:generate` → **`prisma:push`** → **`prisma:seed`** → `typecheck` → `build`.
+- O CI **cria e popula o SQLite local** (`prisma/dev.db`) antes do build, então o prerender de páginas que consultam Prisma não falha por tabela ausente.
+- Não exige secrets Supabase. Cloud validation permanece manual até existirem credenciais reais.
 
-### 1.4. UX preservada
+### 1.4. Páginas dinâmicas
+- Páginas que consultam Prisma em render foram marcadas com `export const dynamic = "force-dynamic"`.
+- Páginas afetadas: `/admin`, `/admin/packages`, `/admin/residents`, `/admin/history`, `/admin/settings`, `/mobile`, `/mobile/pending`, `/mobile/package/[id]`.
+- Páginas puramente informativas (`/`, `/mobile/intake`, `/admin/import`) seguem estáticas porque não dependem de dados em tempo de build.
+- **Por que dinâmico**: cada render reflete o estado real do banco (entrada de pacote, baixa de retirada, KPIs). Evita cache obsoleto e dispensa o build de depender de uma seed "perfeita" que poderia mascarar regressões.
+
+### 1.5. UX preservada
 - Câmera-first mobile intake (`/mobile/intake`) com OCR opcional e fallback manual.
 - Resident autocomplete (`/api/residents/search`).
 - WhatsApp assistido via `wa.me` (sem Cloud API).
@@ -87,3 +94,21 @@
 - PWA manifest + service worker para tolerar offline real.
 - Migrations versionadas (`prisma migrate dev`) quando a estrutura estabilizar.
 - Documentar o fluxo de regenerar o cliente Prisma no seed cloud.
+
+## 6. CI: contrato atual
+
+O CI executa a sequência abaixo em todo push/PR para `main` e `mvp/**`:
+
+```bash
+npm ci
+npm run prisma:validate   # schema SQLite válido
+npm run prisma:generate   # cliente Prisma
+npm run prisma:push       # cria prisma/dev.db com todas as tabelas
+npm run prisma:seed       # popula com 5 buildings, 50 units, 120 residents, 32 packages
+npm run typecheck         # tsc --noEmit
+npm run build             # Next.js build (16/16 páginas)
+```
+
+Páginas DB-backed são `force-dynamic` para evitar dependência de banco no build. Páginas estáticas (`/`, `/mobile/intake`, `/admin/import`) permanecem estáticas porque não chamam Prisma.
+
+> **Importante**: passar o CI **não é** validação cloud. Para validar contra Supabase real, siga o passo a passo da seção 4 com credenciais de verdade. O CI garante que o build fica verde localmente; o deploy na Vercel continua dependendo das envs configuradas no painel.

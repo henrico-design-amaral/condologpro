@@ -7,6 +7,8 @@ import { prisma } from "@/lib/prisma";
 import { formatDateTime, formatRelativeHours } from "@/lib/format";
 import { isPackageOverdue, overdueThresholdDate } from "@/lib/stats";
 
+export const dynamic = "force-dynamic";
+
 type MobilePendingPageProps = {
   searchParams: Promise<{
     q?: string;
