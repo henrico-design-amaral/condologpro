@@ -1,4 +1,4 @@
-# Supabase + Vercel Setup — CondoLogPro
+# Supabase + Vercel Setup - CondoLogPro
 
 ## Objetivo
 
@@ -6,15 +6,15 @@ Preparar o CondoLogPro para um MVP cloud-ready usando GitHub, Vercel, Supabase P
 
 ## Estado atual
 
-- O schema local padrão continua em `prisma/schema.prisma` com SQLite.
-- O schema cloud está em `prisma/schema.supabase.prisma` com PostgreSQL.
-- A aplicação usa `DATABASE_URL` para Prisma.
+- O schema local padrao continua em `prisma/schema.prisma` com SQLite.
+- O schema cloud esta em `prisma/schema.supabase.prisma` com PostgreSQL.
+- A aplicacao usa `DATABASE_URL` para Prisma.
 - O upload da etiqueta usa `src/lib/storage.ts`.
-- Sem variáveis Supabase completas, o storage salva em `public/uploads`.
-- Com variáveis Supabase completas, o storage envia para Supabase Storage usando `SUPABASE_SERVICE_ROLE_KEY` apenas no servidor.
-- O CI prepara um SQLite local com `prisma:push` e `prisma:seed` antes de `typecheck` e `build`; isso não valida Supabase real.
+- Sem variaveis Supabase completas, o storage salva em `public/uploads`.
+- Com variaveis Supabase completas, o storage envia para Supabase Storage usando `SUPABASE_SERVICE_ROLE_KEY` apenas no servidor.
+- O CI prepara um SQLite local com `prisma:push` e `prisma:seed` antes de `typecheck` e `build`; isso nao valida Supabase real.
 
-## Variáveis de ambiente
+## Variaveis de ambiente
 
 Local SQLite:
 
@@ -36,7 +36,7 @@ SUPABASE_STORAGE_PUBLIC="true"
 
 Use `SUPABASE_STORAGE_PUBLIC="false"` se o bucket for privado. Nesse caso, a UI deve consumir URLs assinadas geradas no servidor.
 
-`SUPABASE_SERVICE_ROLE_KEY` deve ficar apenas no servidor. Não coloque esse valor em código, Git, variáveis públicas ou componentes client-side.
+`SUPABASE_SERVICE_ROLE_KEY` deve ficar apenas no servidor. Nao coloque esse valor em codigo, Git, variaveis publicas ou componentes client-side.
 
 ## Banco Supabase
 
@@ -52,17 +52,17 @@ npm run prisma:supabase:push
 npm run prisma:supabase:seed
 ```
 
-Use `prisma db push` nesta fase porque o MVP ainda está evoluindo rapidamente. Quando a estrutura estabilizar, migrar para migrations versionadas.
+Use `prisma db push` nesta fase porque o MVP ainda esta evoluindo rapidamente. Quando a estrutura estabilizar, migrar para migrations versionadas.
 
 ## Storage Supabase
 
 1. Criar bucket `package-labels`.
-2. Definir política de acesso conforme o piloto:
-   - bucket público se a foto precisa aparecer por URL direta no app;
-   - bucket privado se o próximo passo for assinar URLs no servidor.
+2. Definir politica de acesso conforme o piloto:
+   - bucket publico se a foto precisa aparecer por URL direta no app;
+   - bucket privado se o proximo passo for assinar URLs no servidor.
 3. Configurar `SUPABASE_STORAGE_BUCKET="package-labels"`.
 4. Configurar `SUPABASE_STORAGE_PUBLIC`:
-   - `"true"` para URL pública;
+   - `"true"` para URL publica;
    - `"false"` para bucket privado e URL assinada.
 5. Configurar `NEXT_PUBLIC_SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY`.
 
@@ -71,21 +71,21 @@ O helper atual:
 - valida JPG, PNG e WebP;
 - limita imagens a 8 MB;
 - gera nomes seguros por UUID;
-- grava localmente quando Supabase não está configurado;
-- envia para Supabase Storage quando as variáveis existem;
+- grava localmente quando Supabase nao esta configurado;
+- envia para Supabase Storage quando as variaveis existem;
 - oferece `createSignedLabelUrl()` para bucket privado.
 
 ## Vercel
 
-1. Conectar o repositório GitHub do CondoLogPro na Vercel.
-2. Configurar as variáveis acima no painel do projeto.
+1. Conectar o repositorio GitHub do CondoLogPro na Vercel.
+2. Configurar as variaveis acima no painel do projeto.
 3. Build command: `npm run build`.
 4. Install command: `npm install`.
 5. Sem credenciais Supabase reais, validar apenas o build local.
 
 ## CI GitHub Actions
 
-O CI não usa secrets Supabase. Ele valida o modo local:
+O CI nao usa secrets Supabase. Ele valida o modo local:
 
 ```bash
 npm ci
@@ -98,31 +98,31 @@ npm run typecheck
 npm run build
 ```
 
-Esse fluxo garante que páginas que consultam Prisma não falhem por tabelas SQLite ausentes em runner limpo. Ele não prova que Postgres/Supabase Storage estão configurados.
+Esse fluxo garante que paginas que consultam Prisma nao falhem por tabelas SQLite ausentes em runner limpo. Ele nao prova que Postgres ou Supabase Storage estao configurados.
 
 ## Local vs Cloud
 
-- Local padrão: SQLite + upload em `public/uploads`.
+- Local padrao: SQLite + upload em `public/uploads`.
 - Cloud: Supabase Postgres + Supabase Storage.
-- O código não finge conexão cloud quando credenciais não existem.
+- O codigo nao finge conexao cloud quando credenciais nao existem.
 - O fluxo de encomendas deve continuar funcionando localmente para teste controlado.
 
-## Câmera mobile
+## Camera mobile
 
-`getUserMedia` exige secure context. Em produção Vercel com HTTPS, a câmera direta deve ser suportada quando o navegador permitir. Em localhost, navegadores costumam permitir testes locais. Em celular acessando `http://IP-DA-LAN:3000`, a câmera direta pode falhar por contexto inseguro.
+`getUserMedia` exige secure context. Em producao Vercel com HTTPS, a camera direta deve ser suportada quando o navegador permitir. Em localhost, navegadores costumam permitir testes locais. Em celular acessando `http://IP-DA-LAN:3000`, a camera direta pode falhar por contexto inseguro.
 
-Por isso `/mobile/intake` mantém sempre o fallback:
+Por isso `/mobile/intake` mantem sempre o fallback:
 
 ```html
 <input type="file" accept="image/*" capture="environment">
 ```
 
-A câmera física ainda precisa ser testada em aparelho real via HTTPS. Não considerar validação local desktop como prova de câmera em produção.
+A camera fisica ainda precisa ser testada em aparelho real via HTTPS. Nao considerar validacao local desktop como prova de camera em producao.
 
-## Limitações conhecidas
+## Limitacoes conhecidas
 
-- Não há validação real de conexão Supabase neste ambiente sem credenciais.
-- O schema PostgreSQL está preparado, mas precisa de `DATABASE_URL`/`DIRECT_URL` reais.
+- Nao ha validacao real de conexao Supabase neste ambiente sem credenciais.
+- O schema PostgreSQL esta preparado, mas precisa de `DATABASE_URL` e `DIRECT_URL` reais.
 - Bucket privado exige consumo de URL assinada server-side antes do piloto cloud.
-- Telefone em LAN HTTP pode não abrir câmera direta; fallback de captura por arquivo deve funcionar.
-- Billing, WhatsApp Cloud API e módulos genéricos de condomínio continuam fora do MVP.
+- Telefone em LAN HTTP pode nao abrir camera direta; fallback de captura por arquivo deve funcionar.
+- Billing, WhatsApp Cloud API e modulos genericos de condominio continuam fora do MVP.
