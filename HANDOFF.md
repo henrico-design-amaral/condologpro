@@ -2,7 +2,12 @@
 
 ## Último estado conhecido
 
-Branch atual: `fix/ci-database-build` (base: `mvp/cloud-ready-foundation` após PR #4).
+Branch atual: `infra/supabase-vercel-camera-mvp`.
+
+Esta branch está resolvendo o merge de `main` após PR #6. O estado final deve preservar:
+
+- PR #6: CI prepara SQLite antes de `typecheck`/`build`, roda `prisma:push` e `prisma:seed`, páginas DB-backed são `force-dynamic`, docs cloud-ready atualizados.
+- Branch atual: câmera-first mobile intake, Supabase/Vercel setup, storage abstraction, OCR opcional, autocomplete, criação de pacote e WhatsApp success flow.
 
 O projeto está **cloud-ready com fallback local**:
 
@@ -17,7 +22,7 @@ O projeto está **cloud-ready com fallback local**:
 - `/mobile/package/[id]` com baixa de retirada, notificação via WhatsApp assistido e timeline.
 - `/admin` com KPIs, `/admin/packages`, `/admin/history`, `/admin/residents`, `/admin/import`, `/admin/settings`.
 - Importador CSV com `preview` e `commit` (Zod).
-- CI no GitHub Actions rodando **`prisma:validate` → `prisma:generate` → `prisma:push` → `prisma:seed` → `typecheck` → `build`**. O CI cria e popula o SQLite local antes do build, evitando o erro "table main.Package does not exist" no prerender.
+- CI no GitHub Actions rodando **`prisma:validate` → `prisma:generate` → inicialização do SQLite → `prisma:push` → `prisma:seed` → `typecheck` → `build`**.
 - Páginas DB-backed marcadas como `force-dynamic` para refletir dados em tempo real e desacoplar o build do estado da seed.
 - `vercel.json` no root para deploy.
 - Documentação completa em `docs/MVP_SCOPE.md`, `docs/OFFLINE_FIRST_ARCHITECTURE.md`, `docs/PRODUCT_DECISIONS.md`, `docs/VALIDATION_PLAN.md`, `docs/BENCHMARK_NOTES.md`, `docs/IMPLEMENTATION_LOG.md`, `docs/implementation/CLOUD_READY_FOUNDATION.md`, `docs/implementation/SUPABASE_VERCEL_SETUP.md`, `docs/implementation/CAMERA_CAPTURE_CORE_FLOW.md`.
@@ -46,6 +51,7 @@ O fluxo real de referência continua:
 - Conectar repo GitHub à Vercel.
 - Rodar comandos cloud documentados em `docs/implementation/SUPABASE_VERCEL_SETUP.md`.
 - Se o bucket for privado, decidir se a UI consome signed URL via endpoint dedicado (follow-up).
+- Testar câmera em aparelho físico via HTTPS. Em celular pela LAN HTTP, `getUserMedia` pode falhar e o fallback de upload/captura deve ser usado.
 
 ## Atenção
 

@@ -30,24 +30,28 @@
 - [x] Criar importador CSV (preview + commit).
 - [x] Criar dashboard com KPIs.
 - [x] Criar página de histórico com timeline de eventos.
+- [x] Preparar CI para criar/semear SQLite antes do build.
 - [ ] Rodar QA operacional manual completo.
 - [ ] Testar acesso mobile na rede local.
 
 ## Cloud-ready MVP
 
-- [x] Criar branch `mvp/cloud-ready-foundation` (renomeada de `mvp/offline-first-foundation`).
+- [x] Criar branch `infra/supabase-vercel-camera-mvp`.
 - [x] Adicionar variáveis Supabase em `.env.example`.
 - [x] Criar `prisma/schema.supabase.prisma` para PostgreSQL.
 - [x] Criar scripts `prisma:supabase:*` (`validate`, `generate`, `push`, `seed`, `studio`).
+- [x] Criar scripts locais `db:*` equivalentes para CI/desenvolvimento.
 - [x] Criar `src/lib/storage.ts` com fallback local e Supabase Storage.
 - [x] Adicionar `createSignedLabelUrl()` para bucket privado.
 - [x] Adicionar `detectStorageMode()` para inspeção operacional.
 - [x] Criar `vercel.json` (framework, build, headers de segurança).
-- [x] Criar `.github/workflows/ci.yml` (typecheck + build, sem secrets).
+- [x] Criar `.github/workflows/ci.yml`.
+- [x] Atualizar CI com `prisma:push` e `prisma:seed` antes de `typecheck`/`build`.
 - [x] Criar `docs/implementation/CLOUD_READY_FOUNDATION.md`.
+- [x] Criar `docs/implementation/SUPABASE_VERCEL_SETUP.md`.
+- [x] Criar `docs/implementation/CAMERA_CAPTURE_CORE_FLOW.md`.
 - [x] Atualizar `docs/MVP_SCOPE.md` para cloud-ready.
 - [x] Atualizar `docs/OFFLINE_FIRST_ARCHITECTURE.md` para fallback local.
-- [x] Atualizar `docs/implementation/SUPABASE_VERCEL_SETUP.md` (passo a passo + signed URL).
 - [x] Atualizar `PROJECT_CONTROL.md`, `TASKS.md`, `HANDOFF.md`.
 - [ ] Criar projeto Supabase real.
 - [ ] Criar bucket Supabase real (`package-labels`).
@@ -72,7 +76,10 @@
 - [x] Baixa de retirada.
 - [x] Histórico de eventos.
 - [x] OCR experimental não bloqueante.
-- [x] Atrasadas (>24h) destacadas em todas as listas.
+- [x] Câmera direta com `getUserMedia`, preview, captura e retake.
+- [x] Fallback com `<input type="file" accept="image/*" capture="environment">`.
+- [x] Estados de erro para permissão, contexto inseguro e navegador sem suporte.
+- [x] Atrasadas (>24h) destacadas em listas.
 - [x] Status badges semânticos.
 - [x] Dashboard com KPIs primários e secundários.
 
