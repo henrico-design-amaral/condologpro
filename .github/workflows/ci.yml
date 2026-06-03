@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - "mvp/**"
+      - "fix/**"
+  pull_request:
+    branches:
+      - main
+      - "mvp/**"
+      - "fix/**"
+
+jobs:
+  build:
+    name: Typecheck, validate, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      DATABASE_URL: "file:./dev.db"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate Prisma schema (SQLite)
+        run: npm run prisma:validate
+
+      - name: Generate Prisma client (SQLite)
+        run: npm run prisma:generate
+
+      - name: Initialize local SQLite file
+        run: mkdir -p prisma && touch prisma/dev.db
+
+      - name: Apply Prisma schema to local SQLite
+        run: npm run prisma:push
+
+      - name: Seed local SQLite
+        run: npm run prisma:seed
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build

@@ -11,7 +11,8 @@ Preparar o CondoLogPro para um MVP cloud-ready usando GitHub, Vercel, Supabase P
 - A aplicação usa `DATABASE_URL` para Prisma.
 - O upload da etiqueta usa `src/lib/storage.ts`.
 - Sem variáveis Supabase completas, o storage salva em `public/uploads`.
-- Com variáveis Supabase completas, o storage envia para Supabase Storage.
+- Com variáveis Supabase completas, o storage envia para Supabase Storage usando `SUPABASE_SERVICE_ROLE_KEY` apenas no servidor.
+- O CI prepara um SQLite local com `prisma:push` e `prisma:seed` antes de `typecheck` e `build`; isso não valida Supabase real.
 
 ## Variáveis de ambiente
 
@@ -30,9 +31,12 @@ NEXT_PUBLIC_SUPABASE_URL="https://[project-ref].supabase.co"
 NEXT_PUBLIC_SUPABASE_ANON_KEY="[anon-key]"
 SUPABASE_SERVICE_ROLE_KEY="[service-role-key-server-only]"
 SUPABASE_STORAGE_BUCKET="package-labels"
+SUPABASE_STORAGE_PUBLIC="true"
 ```
 
-`SUPABASE_SERVICE_ROLE_KEY` deve ficar apenas no servidor. Não coloque esse valor em código, Git ou variáveis públicas.
+Use `SUPABASE_STORAGE_PUBLIC="false"` se o bucket for privado. Nesse caso, a UI deve consumir URLs assinadas geradas no servidor.
+
+`SUPABASE_SERVICE_ROLE_KEY` deve ficar apenas no servidor. Não coloque esse valor em código, Git, variáveis públicas ou componentes client-side.
 
 ## Banco Supabase
 
@@ -45,7 +49,7 @@ SUPABASE_STORAGE_BUCKET="package-labels"
 npm run prisma:supabase:validate
 npm run prisma:supabase:generate
 npm run prisma:supabase:push
-npm run prisma:seed
+npm run prisma:supabase:seed
 ```
 
 Use `prisma db push` nesta fase porque o MVP ainda está evoluindo rapidamente. Quando a estrutura estabilizar, migrar para migrations versionadas.
@@ -57,9 +61,19 @@ Use `prisma db push` nesta fase porque o MVP ainda está evoluindo rapidamente. 
    - bucket público se a foto precisa aparecer por URL direta no app;
    - bucket privado se o próximo passo for assinar URLs no servidor.
 3. Configurar `SUPABASE_STORAGE_BUCKET="package-labels"`.
-4. Configurar `NEXT_PUBLIC_SUPABASE_URL` e uma chave server-side.
+4. Configurar `SUPABASE_STORAGE_PUBLIC`:
+   - `"true"` para URL pública;
+   - `"false"` para bucket privado e URL assinada.
+5. Configurar `NEXT_PUBLIC_SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY`.
 
-O helper atual retorna URL pública. Se o bucket for privado, será necessário trocar para URL assinada antes do piloto cloud.
+O helper atual:
+
+- valida JPG, PNG e WebP;
+- limita imagens a 8 MB;
+- gera nomes seguros por UUID;
+- grava localmente quando Supabase não está configurado;
+- envia para Supabase Storage quando as variáveis existem;
+- oferece `createSignedLabelUrl()` para bucket privado.
 
 ## Vercel
 
@@ -69,6 +83,23 @@ O helper atual retorna URL pública. Se o bucket for privado, será necessário 
 4. Install command: `npm install`.
 5. Sem credenciais Supabase reais, validar apenas o build local.
 
+## CI GitHub Actions
+
+O CI não usa secrets Supabase. Ele valida o modo local:
+
+```bash
+npm ci
+npm run prisma:validate
+npm run prisma:generate
+mkdir -p prisma && touch prisma/dev.db
+npm run prisma:push
+npm run prisma:seed
+npm run typecheck
+npm run build
+```
+
+Esse fluxo garante que páginas que consultam Prisma não falhem por tabelas SQLite ausentes em runner limpo. Ele não prova que Postgres/Supabase Storage estão configurados.
+
 ## Local vs Cloud
 
 - Local padrão: SQLite + upload em `public/uploads`.
@@ -76,9 +107,22 @@ O helper atual retorna URL pública. Se o bucket for privado, será necessário 
 - O código não finge conexão cloud quando credenciais não existem.
 - O fluxo de encomendas deve continuar funcionando localmente para teste controlado.
 
+## Câmera mobile
+
+`getUserMedia` exige secure context. Em produção Vercel com HTTPS, a câmera direta deve ser suportada quando o navegador permitir. Em localhost, navegadores costumam permitir testes locais. Em celular acessando `http://IP-DA-LAN:3000`, a câmera direta pode falhar por contexto inseguro.
+
+Por isso `/mobile/intake` mantém sempre o fallback:
+
+```html
+<input type="file" accept="image/*" capture="environment">
+```
+
+A câmera física ainda precisa ser testada em aparelho real via HTTPS. Não considerar validação local desktop como prova de câmera em produção.
+
 ## Limitações conhecidas
 
 - Não há validação real de conexão Supabase neste ambiente sem credenciais.
 - O schema PostgreSQL está preparado, mas precisa de `DATABASE_URL`/`DIRECT_URL` reais.
-- Bucket privado ainda exige implementação de URL assinada.
+- Bucket privado exige consumo de URL assinada server-side antes do piloto cloud.
+- Telefone em LAN HTTP pode não abrir câmera direta; fallback de captura por arquivo deve funcionar.
 - Billing, WhatsApp Cloud API e módulos genéricos de condomínio continuam fora do MVP.

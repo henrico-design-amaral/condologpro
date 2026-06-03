@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, type PackageStatus } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -43,6 +43,14 @@ const lastNames = [
   "Gomes"
 ] as const;
 
+const intakeNotes = [
+  "Pacote grande. Separar na prateleira inferior.",
+  "Caixa pequena. Conferir lacre.",
+  "Encomenda frágil. Não empilhar.",
+  "Entrega pessoal. Pedir documento na retirada.",
+  "Etiqueta sem código visível. Conferir manual."
+] as const;
+
 function randomFrom<T>(items: readonly T[]): T {
   const item = items[Math.floor(Math.random() * items.length)];
 
@@ -63,6 +71,53 @@ function makeResidentName(index: number) {
 
 function makePackageCode(index: number) {
   return `CLP-${String(index).padStart(5, "0")}`;
+}
+
+type StatusPlan = {
+  status: PackageStatus;
+  hoursAgo: number;
+  notifiedOffsetMinutes?: number;
+  pickedUpOffsetHours?: number;
+};
+
+function planFor(index: number, total: number): StatusPlan {
+  const fraction = index / total;
+
+  if (index <= 3) {
+    return {
+      status: "PENDING",
+      hoursAgo: 36 + index * 12
+    };
+  }
+
+  if (fraction <= 0.3) {
+    return {
+      status: "PENDING",
+      hoursAgo: 2 + index
+    };
+  }
+
+  if (fraction <= 0.65) {
+    return {
+      status: "NOTIFIED",
+      hoursAgo: 4 + index,
+      notifiedOffsetMinutes: 5
+    };
+  }
+
+  if (fraction <= 0.95) {
+    return {
+      status: "PICKED_UP",
+      hoursAgo: 6 + index,
+      notifiedOffsetMinutes: 8,
+      pickedUpOffsetHours: 3
+    };
+  }
+
+  return {
+    status: "CANCELLED",
+    hoursAgo: 24 + index
+  };
 }
 
 async function main() {
@@ -166,28 +221,22 @@ async function main() {
     throw new Error("Seed failed: no residents were created.");
   }
 
-  for (let index = 1; index <= 30; index++) {
-    const resident = randomFrom(residents);
+  const totalPackages = 32;
 
-    const status =
-      index <= 12
-        ? "PENDING"
-        : index <= 22
-          ? "NOTIFIED"
-          : "PICKED_UP";
+  for (let index = 1; index <= totalPackages; index++) {
+    const resident = randomFrom(residents);
+    const plan = planFor(index, totalPackages);
 
     const receivedAt = new Date();
-    receivedAt.setHours(receivedAt.getHours() - index);
+    receivedAt.setHours(receivedAt.getHours() - plan.hoursAgo);
 
-    const notifiedAt =
-      status === "NOTIFIED" || status === "PICKED_UP"
-        ? new Date(receivedAt.getTime() + 5 * 60 * 1000)
-        : null;
+    const notifiedAt = plan.notifiedOffsetMinutes
+      ? new Date(receivedAt.getTime() + plan.notifiedOffsetMinutes * 60 * 1000)
+      : null;
 
-    const pickedUpAt =
-      status === "PICKED_UP"
-        ? new Date(receivedAt.getTime() + 4 * 60 * 60 * 1000)
-        : null;
+    const pickedUpAt = plan.pickedUpOffsetHours
+      ? new Date(receivedAt.getTime() + plan.pickedUpOffsetHours * 60 * 60 * 1000)
+      : null;
 
     const pkg = await prisma.package.create({
       data: {
@@ -196,8 +245,8 @@ async function main() {
         residentId: resident.id,
         packageCode: makePackageCode(index),
         carrier: randomFrom(carriers),
-        status,
-        notes: index % 5 === 0 ? "Pacote grande. Separar na prateleira inferior." : null,
+        status: plan.status,
+        notes: index % 5 === 0 ? randomFrom(intakeNotes) : null,
         receivedAt,
         notifiedAt,
         pickedUpAt,
@@ -211,7 +260,8 @@ async function main() {
         organizationId: organization.id,
         packageId: pkg.id,
         type: "PACKAGE_RECEIVED",
-        message: `Encomenda ${pkg.packageCode} recebida para ${resident.unit.building.label}, apto ${resident.unit.number}.`
+        message: `Encomenda ${pkg.packageCode} recebida para ${resident.unit.building.label}, apto ${resident.unit.number}.`,
+        createdAt: receivedAt
       }
     });
 
@@ -238,6 +288,18 @@ async function main() {
         }
       });
     }
+
+    if (plan.status === "CANCELLED") {
+      await prisma.packageEvent.create({
+        data: {
+          organizationId: organization.id,
+          packageId: pkg.id,
+          type: "PACKAGE_CANCELLED",
+          message: "Encomenda cancelada pelo operador da portaria.",
+          createdAt: new Date(receivedAt.getTime() + 30 * 60 * 1000)
+        }
+      });
+    }
   }
 
   const summary = {
@@ -246,7 +308,11 @@ async function main() {
     units: await prisma.unit.count(),
     residents: await prisma.resident.count(),
     packages: await prisma.package.count(),
-    packageEvents: await prisma.packageEvent.count()
+    packageEvents: await prisma.packageEvent.count(),
+    pending: await prisma.package.count({ where: { status: "PENDING" } }),
+    notified: await prisma.package.count({ where: { status: "NOTIFIED" } }),
+    pickedUp: await prisma.package.count({ where: { status: "PICKED_UP" } }),
+    cancelled: await prisma.package.count({ where: { status: "CANCELLED" } })
   };
 
   console.log("Seed completed:", summary);
