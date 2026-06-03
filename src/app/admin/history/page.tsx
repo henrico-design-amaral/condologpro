@@ -5,6 +5,8 @@ import { StatusBadge } from "@/components/status-badge";
 import { prisma } from "@/lib/prisma";
 import { formatDateTime } from "@/lib/format";
 
+export const dynamic = "force-dynamic";
+
 type AdminHistoryPageProps = {
   searchParams: Promise<{
     q?: string;

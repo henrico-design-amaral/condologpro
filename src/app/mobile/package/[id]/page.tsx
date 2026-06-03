@@ -9,6 +9,8 @@ import { formatDateTime, formatRelativeHours } from "@/lib/format";
 import { buildPackageNotificationMessage, buildWhatsAppUrl } from "@/lib/whatsapp";
 import { isPackageOverdue } from "@/lib/stats";
 
+export const dynamic = "force-dynamic";
+
 type MobilePackagePageProps = {
   params: Promise<{
     id: string;

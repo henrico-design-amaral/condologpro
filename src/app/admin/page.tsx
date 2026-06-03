@@ -21,6 +21,8 @@ import {
   isPackageOverdue
 } from "@/lib/stats";
 
+export const dynamic = "force-dynamic";
+
 const navItems = [
   { href: "/admin/residents", label: "Moradores", description: "Base usada pelo autocomplete da portaria." },
   { href: "/admin/packages", label: "Encomendas", description: "Operação completa com filtros e busca." },
