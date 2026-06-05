@@ -40,6 +40,14 @@ type CreatePackageResponse = {
   whatsappMessage: string;
 };
 
+type CameraDiagnostic = {
+  secureContext: boolean;
+  mediaDevices: boolean;
+  getUserMedia: boolean;
+  errorName?: string;
+  errorMessage?: string;
+};
+
 const carrierHints = ["Correios", "Mercado Livre", "Shopee", "Amazon", "Jadlog", "Loggi"];
 
 function confidenceFor(text: string): OcrSuggestion["confidence"] {
@@ -81,11 +89,31 @@ function extractOcrSuggestions(text: string): OcrSuggestion[] {
   return suggestions;
 }
 
+function cameraErrorMessage(error: unknown) {
+  if (error instanceof DOMException) {
+    if (error.name === "NotAllowedError" || error.name === "SecurityError") {
+      return "A permissão da câmera foi bloqueada. Libere no navegador ou use Anexar para fotografar a etiqueta.";
+    }
+
+    if (error.name === "NotFoundError" || error.name === "OverconstrainedError") {
+      return "Nenhuma câmera compatível foi encontrada. Use Anexar para fotografar ou enviar a etiqueta.";
+    }
+
+    if (error.name === "NotReadableError" || error.name === "AbortError") {
+      return "A câmera está ocupada por outro aplicativo ou não respondeu. Feche outros apps de câmera e tente novamente.";
+    }
+  }
+
+  return "Não foi possível abrir a câmera direta. Use Anexar para continuar o cadastro.";
+}
+
 export function IntakeForm() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [cameraState, setCameraState] = useState<"idle" | "starting" | "ready" | "error">("idle");
   const [cameraError, setCameraError] = useState<string | null>(null);
+  const [cameraDiagnostic, setCameraDiagnostic] = useState<CameraDiagnostic | null>(null);
+  const [videoReady, setVideoReady] = useState(false);
   const [labelFile, setLabelFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -107,6 +135,11 @@ export function IntakeForm() {
   useEffect(() => {
     return () => {
       streamRef.current?.getTracks().forEach((track) => track.stop());
+    };
+  }, []);
+
+  useEffect(() => {
+    return () => {
       if (previewUrl) {
         URL.revokeObjectURL(previewUrl);
       }
@@ -158,60 +191,165 @@ export function IntakeForm() {
       URL.revokeObjectURL(previewUrl);
     }
 
+    stopCameraStream();
     setLabelFile(file);
     setPreviewUrl(URL.createObjectURL(file));
+    setCameraError(null);
+    setCameraDiagnostic(null);
     setOcrStatus("idle");
     setOcrSuggestions([]);
     setOcrError(null);
   }
 
+  function clearPhoto() {
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+
+    setLabelFile(null);
+    setPreviewUrl(null);
+    setOcrStatus("idle");
+    setOcrSuggestions([]);
+    setOcrError(null);
+  }
+
+  function stopCameraStream() {
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+    streamRef.current = null;
+    setVideoReady(false);
+
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+  }
+
+  function currentCameraDiagnostic(error?: unknown): CameraDiagnostic {
+    return {
+      secureContext: window.isSecureContext,
+      mediaDevices: Boolean(navigator.mediaDevices),
+      getUserMedia: Boolean(navigator.mediaDevices?.getUserMedia),
+      ...(error instanceof DOMException
+        ? { errorName: error.name, errorMessage: error.message }
+        : error instanceof Error
+          ? { errorName: error.name, errorMessage: error.message }
+        : {})
+    };
+  }
+
+  async function attachCameraStream(stream: MediaStream) {
+    let video = videoRef.current;
+
+    if (!video) {
+      await new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve()));
+      video = videoRef.current;
+    }
+
+    if (!video) {
+      throw new Error("A prévia de câmera não foi montada.");
+    }
+
+    const activeVideo = video;
+
+    activeVideo.srcObject = stream;
+
+    await new Promise<void>((resolve, reject) => {
+      if (activeVideo.readyState >= HTMLMediaElement.HAVE_METADATA && activeVideo.videoWidth > 0) {
+        resolve();
+        return;
+      }
+
+      const timeout = window.setTimeout(() => {
+        cleanup();
+        reject(new Error("Tempo esgotado ao preparar a câmera."));
+      }, 5000);
+
+      function cleanup() {
+        window.clearTimeout(timeout);
+        activeVideo.removeEventListener("loadedmetadata", handleLoadedMetadata);
+        activeVideo.removeEventListener("error", handleError);
+      }
+
+      function handleLoadedMetadata() {
+        cleanup();
+        resolve();
+      }
+
+      function handleError() {
+        cleanup();
+        reject(new Error("O navegador não conseguiu exibir a câmera."));
+      }
+
+      activeVideo.addEventListener("loadedmetadata", handleLoadedMetadata);
+      activeVideo.addEventListener("error", handleError);
+    });
+
+    await activeVideo.play();
+    setVideoReady(true);
+  }
+
   async function startCamera() {
     setCameraError(null);
+    setCameraDiagnostic(null);
+    setVideoReady(false);
     setCameraState("starting");
 
     if (!navigator.mediaDevices?.getUserMedia) {
       setCameraState("error");
-      setCameraError("Este navegador não oferece câmera direta. Use o botão de anexar/fotografar etiqueta.");
+      setCameraDiagnostic(currentCameraDiagnostic());
+      setCameraError("Este navegador não oferece câmera direta. Use Anexar para fotografar ou enviar a etiqueta.");
       return;
     }
 
     if (!window.isSecureContext) {
       setCameraState("error");
-      setCameraError("A câmera direta exige HTTPS ou localhost. Em celular via rede local HTTP, use o upload com captura.");
+      setCameraDiagnostic(currentCameraDiagnostic());
+      setCameraError("A câmera direta exige HTTPS ou localhost. Em celular via rede local HTTP, use Anexar para continuar.");
       return;
     }
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
+      stopCameraStream();
+
+      const preferredConstraints: MediaStreamConstraints = {
         video: {
-          facingMode: { ideal: "environment" }
+          facingMode: { ideal: "environment" },
+          width: { ideal: 1280 },
+          height: { ideal: 960 }
         },
         audio: false
-      });
+      };
 
-      streamRef.current?.getTracks().forEach((track) => track.stop());
-      streamRef.current = stream;
+      let stream: MediaStream;
 
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
+      try {
+        stream = await navigator.mediaDevices.getUserMedia(preferredConstraints);
+      } catch (firstError) {
+        if (
+          firstError instanceof DOMException &&
+          (firstError.name === "NotAllowedError" || firstError.name === "SecurityError")
+        ) {
+          throw firstError;
+        }
+
+        stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
       }
 
+      streamRef.current = stream;
+      await attachCameraStream(stream);
       setCameraState("ready");
     } catch (error) {
+      stopCameraStream();
       setCameraState("error");
-      setCameraError(
-        error instanceof DOMException && error.name === "NotAllowedError"
-          ? "A permissão da câmera foi bloqueada. Libere no navegador ou use o upload com captura."
-          : "Não foi possível abrir a câmera. Use o upload com captura para continuar."
-      );
+      setCameraDiagnostic(currentCameraDiagnostic(error));
+      setCameraError(cameraErrorMessage(error));
     }
   }
 
   async function captureFrame() {
     const video = videoRef.current;
 
-    if (!video) {
+    if (!video || !videoReady || video.videoWidth === 0 || video.videoHeight === 0) {
+      setCameraError("A imagem da câmera ainda não está pronta. Aguarde a prévia aparecer ou use Anexar.");
       return;
     }
 
@@ -237,6 +375,11 @@ export function IntakeForm() {
     }
 
     setPhoto(new File([blob], `etiqueta-${Date.now()}.jpg`, { type: "image/jpeg" }));
+  }
+
+  async function retakePhoto() {
+    clearPhoto();
+    await startCamera();
   }
 
   async function runOcr() {
@@ -414,9 +557,9 @@ export function IntakeForm() {
           <Camera className="h-6 w-6 text-emerald-300" aria-hidden="true" />
         </div>
 
-        {cameraState === "ready" ? (
+        {cameraState === "ready" || cameraState === "starting" ? (
           <div className="mt-4 overflow-hidden rounded-[8px] border border-neutral-700 bg-black">
-            <video ref={videoRef} className="aspect-[4/3] w-full object-cover" playsInline muted />
+            <video ref={videoRef} className="aspect-[4/3] w-full object-cover" autoPlay playsInline muted />
           </div>
         ) : previewUrl ? (
           <div className="relative mt-4 aspect-[4/3] overflow-hidden rounded-[8px] border border-neutral-700 bg-neutral-950">
@@ -429,9 +572,31 @@ export function IntakeForm() {
         )}
 
         {cameraError ? (
-          <p className="mt-3 rounded-[8px] border border-amber-400/40 bg-amber-400/10 p-3 text-sm text-amber-50">
-            {cameraError}
-          </p>
+          <div className="mt-3 rounded-[8px] border border-amber-400/40 bg-amber-400/10 p-3 text-sm text-amber-50">
+            <p>{cameraError}</p>
+            {cameraDiagnostic ? (
+              <dl className="mt-3 grid gap-1 text-xs text-amber-100/80">
+                <div className="flex justify-between gap-3">
+                  <dt>HTTPS seguro</dt>
+                  <dd>{cameraDiagnostic.secureContext ? "sim" : "não"}</dd>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <dt>MediaDevices</dt>
+                  <dd>{cameraDiagnostic.mediaDevices ? "sim" : "não"}</dd>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <dt>getUserMedia</dt>
+                  <dd>{cameraDiagnostic.getUserMedia ? "sim" : "não"}</dd>
+                </div>
+                {cameraDiagnostic.errorName ? (
+                  <div className="flex justify-between gap-3">
+                    <dt>Erro do navegador</dt>
+                    <dd>{cameraDiagnostic.errorName}</dd>
+                  </div>
+                ) : null}
+              </dl>
+            ) : null}
+          </div>
         ) : null}
 
         <div className="mt-4 grid grid-cols-2 gap-3">
@@ -469,6 +634,7 @@ export function IntakeForm() {
             <button
               type="button"
               onClick={captureFrame}
+              disabled={!videoReady}
               className="flex min-h-14 items-center justify-center gap-2 rounded-[8px] bg-emerald-400 px-4 py-3 font-semibold text-neutral-950 focus:outline-none focus:ring-2 focus:ring-white"
             >
               <FileImage className="h-5 w-5" aria-hidden="true" />
@@ -483,6 +649,16 @@ export function IntakeForm() {
               Retomar
             </button>
           </div>
+        ) : null}
+        {previewUrl ? (
+          <button
+            type="button"
+            onClick={retakePhoto}
+            className="mt-3 flex min-h-12 w-full items-center justify-center gap-2 rounded-[8px] border border-neutral-600 px-4 py-3 text-sm font-semibold text-neutral-100 focus:outline-none focus:ring-2 focus:ring-white"
+          >
+            <RotateCcw className="h-5 w-5" aria-hidden="true" />
+            Refazer foto
+          </button>
         ) : null}
       </div>
 

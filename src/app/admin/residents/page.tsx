@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
 
@@ -16,44 +17,57 @@ export default async function AdminResidentsPage({ searchParams }: AdminResident
   const q = params.q?.trim();
   const buildingFilter = params.building?.trim();
 
-  const residents = await prisma.resident.findMany({
-    where: {
-      isActive: true,
-      ...(buildingFilter
-        ? {
-            unit: {
-              building: {
-                label: buildingFilter
+  const where: Prisma.ResidentWhereInput = {
+    isActive: true,
+    ...(buildingFilter
+      ? {
+          unit: {
+            building: {
+              label: buildingFilter
+            }
+          }
+        }
+      : {}),
+    ...(q
+      ? {
+          OR: [
+            { name: { contains: q } },
+            { phone: { contains: q.replace(/\D/g, "") || q } },
+            { unit: { number: { contains: q } } },
+            { unit: { building: { label: { contains: q } } } }
+          ]
+        }
+      : {})
+  };
+
+  const [residents, buildings] = await Promise.all([
+    prisma.resident.findMany({
+      where,
+      select: {
+        id: true,
+        name: true,
+        phone: true,
+        isPrimary: true,
+        notes: true,
+        unit: {
+          select: {
+            number: true,
+            building: {
+              select: {
+                label: true
               }
             }
           }
-        : {}),
-      ...(q
-        ? {
-            OR: [
-              { name: { contains: q } },
-              { phone: { contains: q.replace(/\D/g, "") || q } },
-              { unit: { number: { contains: q } } },
-              { unit: { building: { label: { contains: q } } } }
-            ]
-          }
-        : {})
-    },
-    include: {
-      unit: {
-        include: {
-          building: true
         }
-      }
-    },
-    orderBy: [{ isPrimary: "desc" }, { name: "asc" }],
-    take: 200
-  });
-
-  const buildings = await prisma.building.findMany({
-    orderBy: { label: "asc" },
-    select: { label: true }
-  });
+      },
+      orderBy: [{ isPrimary: "desc" }, { name: "asc" }],
+      take: 120
+    }),
+    prisma.building.findMany({
+      orderBy: { label: "asc" },
+      select: { label: true }
+    })
+  ]);
 
   return (
     <main className="min-h-screen bg-neutral-100 px-6 py-8 text-neutral-950">
@@ -73,20 +87,20 @@ export default async function AdminResidentsPage({ searchParams }: AdminResident
           </div>
           <Link
             href="/admin/import"
-            className="inline-flex min-h-11 items-center rounded-lg bg-neutral-950 px-4 py-3 text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-neutral-950 focus:ring-offset-2 focus:ring-offset-neutral-100"
+            className="inline-flex min-h-11 items-center rounded-[8px] bg-neutral-950 px-4 py-3 text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-neutral-950 focus:ring-offset-2 focus:ring-offset-neutral-100"
           >
             Importar base
           </Link>
         </header>
 
-        <form className="mt-6 flex flex-wrap items-end gap-3 rounded-xl border border-neutral-200 bg-white p-4">
+        <form className="mt-6 flex flex-wrap items-end gap-3 rounded-[8px] border border-neutral-200 bg-white p-4">
           <label className="grid gap-1 text-xs font-semibold uppercase tracking-wide text-neutral-500">
             Buscar morador
             <input
               name="q"
               defaultValue={q}
               placeholder="Nome, telefone, bloco ou apto"
-              className="min-h-11 w-80 rounded-lg border border-neutral-300 px-3 text-base font-normal text-neutral-950 outline-none focus:ring-2 focus:ring-neutral-950"
+              className="min-h-11 w-80 rounded-[8px] border border-neutral-300 px-3 text-base font-normal text-neutral-950 outline-none focus:ring-2 focus:ring-neutral-950"
             />
           </label>
           <label className="grid gap-1 text-xs font-semibold uppercase tracking-wide text-neutral-500">
@@ -94,7 +108,7 @@ export default async function AdminResidentsPage({ searchParams }: AdminResident
             <select
               name="building"
               defaultValue={buildingFilter ?? ""}
-              className="min-h-11 rounded-lg border border-neutral-300 bg-white px-3 text-base font-normal text-neutral-950 outline-none focus:ring-2 focus:ring-neutral-950"
+              className="min-h-11 rounded-[8px] border border-neutral-300 bg-white px-3 text-base font-normal text-neutral-950 outline-none focus:ring-2 focus:ring-neutral-950"
             >
               <option value="">Todos</option>
               {buildings.map((building) => (
@@ -106,19 +120,23 @@ export default async function AdminResidentsPage({ searchParams }: AdminResident
           </label>
           <button
             type="submit"
-            className="min-h-11 rounded-lg bg-neutral-950 px-4 py-3 text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-neutral-950 focus:ring-offset-2 focus:ring-offset-white"
+            className="min-h-11 rounded-[8px] bg-neutral-950 px-4 py-3 text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-neutral-950 focus:ring-offset-2 focus:ring-offset-white"
           >
             Filtrar
           </button>
           <Link
             href="/admin/residents"
-            className="min-h-11 rounded-lg border border-neutral-200 px-4 py-3 text-sm font-semibold text-neutral-700 focus:outline-none focus:ring-2 focus:ring-neutral-950 focus:ring-offset-2 focus:ring-offset-white"
+            className="min-h-11 rounded-[8px] border border-neutral-200 px-4 py-3 text-sm font-semibold text-neutral-700 focus:outline-none focus:ring-2 focus:ring-neutral-950 focus:ring-offset-2 focus:ring-offset-white"
           >
             Limpar
           </Link>
         </form>
 
-        <div className="mt-6 overflow-hidden rounded-xl border border-neutral-200 bg-white">
+        <div className="mt-6 rounded-[8px] border border-neutral-200 bg-white">
+          <div className="flex items-center justify-between gap-3 border-b border-neutral-200 px-5 py-3 text-sm">
+            <p className="font-semibold text-neutral-800">Base ativa</p>
+            <p className="text-neutral-500">Mostrando até 120 moradores</p>
+          </div>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[860px] border-collapse text-sm">
               <thead className="bg-neutral-50 text-left text-xs uppercase tracking-wide text-neutral-500">
@@ -137,7 +155,7 @@ export default async function AdminResidentsPage({ searchParams }: AdminResident
                     <td className="px-5 py-3 font-medium text-neutral-900">{resident.name}</td>
                     <td className="px-5 py-3 text-neutral-600">{resident.unit.building.label}</td>
                     <td className="px-5 py-3 text-neutral-600">{resident.unit.number}</td>
-                    <td className="px-5 py-3 text-neutral-600">{resident.phone ?? "Não informado"}</td>
+                    <td className="whitespace-nowrap px-5 py-3 text-neutral-600">{resident.phone ?? "Não informado"}</td>
                     <td className="px-5 py-3">
                       {resident.isPrimary ? (
                         <span className="rounded-full bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-900">

@@ -36,11 +36,24 @@ export default async function AdminHomePage() {
     getDashboardStats(),
     getBuildingActivity(),
     prisma.package.findMany({
-      include: {
-        resident: true,
+      select: {
+        id: true,
+        status: true,
+        carrier: true,
+        receivedAt: true,
+        resident: {
+          select: {
+            name: true
+          }
+        },
         unit: {
-          include: {
-            building: true
+          select: {
+            number: true,
+            building: {
+              select: {
+                label: true
+              }
+            }
           }
         }
       },
@@ -128,7 +141,7 @@ export default async function AdminHomePage() {
           </div>
           <Link
             href="/mobile"
-            className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-neutral-950 px-4 py-3 text-sm font-semibold text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-neutral-950 focus:ring-offset-2 focus:ring-offset-neutral-100"
+            className="inline-flex min-h-11 items-center gap-2 rounded-[8px] bg-neutral-950 px-4 py-3 text-sm font-semibold text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-neutral-950 focus:ring-offset-2 focus:ring-offset-neutral-100"
           >
             Abrir portaria mobile
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -141,7 +154,7 @@ export default async function AdminHomePage() {
             return (
               <article
                 key={stat.label}
-                className={`rounded-xl border bg-white p-5 ${stat.accent}`}
+                className={`rounded-[8px] border bg-white p-5 ${stat.accent}`}
               >
                 <header className="flex items-center justify-between gap-3">
                   <p className="text-sm font-semibold">{stat.label}</p>
@@ -158,7 +171,7 @@ export default async function AdminHomePage() {
           {secondaryStats.map((stat) => {
             const Icon = stat.icon;
             return (
-              <article key={stat.label} className={`rounded-xl border p-5 ${stat.accent}`}>
+              <article key={stat.label} className={`rounded-[8px] border p-5 ${stat.accent}`}>
                 <header className="flex items-center justify-between gap-3">
                   <p className="text-sm font-semibold">{stat.label}</p>
                   <Icon className="h-5 w-5 opacity-80" aria-hidden="true" />
@@ -175,7 +188,7 @@ export default async function AdminHomePage() {
             <Link
               key={item.href}
               href={item.href}
-              className="group flex flex-col rounded-xl border border-neutral-200 bg-white p-4 transition focus:outline-none focus:ring-2 focus:ring-neutral-950 focus:ring-offset-2 focus:ring-offset-neutral-100 hover:border-neutral-300"
+              className="group flex flex-col rounded-[8px] border border-neutral-200 bg-white p-4 transition focus:outline-none focus:ring-2 focus:ring-neutral-950 focus:ring-offset-2 focus:ring-offset-neutral-100 hover:border-neutral-300"
             >
               <span className="text-sm font-semibold text-neutral-900">{item.label}</span>
               <span className="mt-2 text-xs leading-5 text-neutral-500">{item.description}</span>
@@ -188,7 +201,7 @@ export default async function AdminHomePage() {
         </section>
 
         <section className="mt-8 grid gap-6 lg:grid-cols-[2fr_1fr]">
-          <article className="overflow-hidden rounded-xl border border-neutral-200 bg-white">
+          <article className="overflow-hidden rounded-[8px] border border-neutral-200 bg-white">
             <header className="flex items-center justify-between gap-3 border-b border-neutral-200 px-5 py-4">
               <div>
                 <h2 className="text-lg font-semibold">Últimas encomendas</h2>
@@ -196,7 +209,7 @@ export default async function AdminHomePage() {
               </div>
               <Link
                 href="/admin/packages"
-                className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-neutral-200 px-3 py-2 text-xs font-semibold text-neutral-700 focus:outline-none focus:ring-2 focus:ring-neutral-950 focus:ring-offset-2 focus:ring-offset-white"
+                className="inline-flex min-h-11 items-center gap-1 rounded-[8px] border border-neutral-200 px-3 py-2 text-xs font-semibold text-neutral-700 focus:outline-none focus:ring-2 focus:ring-neutral-950 focus:ring-offset-2 focus:ring-offset-white"
               >
                 Ver todas
                 <ArrowRight className="h-3 w-3" aria-hidden="true" />
@@ -252,7 +265,7 @@ export default async function AdminHomePage() {
             </div>
           </article>
 
-          <article className="rounded-xl border border-neutral-200 bg-white">
+          <article className="rounded-[8px] border border-neutral-200 bg-white">
             <header className="border-b border-neutral-200 px-5 py-4">
               <h2 className="flex items-center gap-2 text-lg font-semibold">
                 <Building2 className="h-4 w-4 text-neutral-500" aria-hidden="true" />

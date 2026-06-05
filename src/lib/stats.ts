@@ -56,7 +56,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     activeResidentCount,
     totalBuildings,
     totalUnits
-  ] = await Promise.all([
+  ] = await prisma.$transaction([
     prisma.package.count({
       where: { receivedAt: { gte: today } }
     }),
@@ -123,34 +123,42 @@ export async function getDashboardStats(): Promise<DashboardStats> {
 }
 
 export async function getBuildingActivity(): Promise<BuildingActivity[]> {
-  const buildings = await prisma.building.findMany({
-    include: {
-      units: {
-        include: {
-          packages: {
+  const packages = await prisma.package.findMany({
+    select: {
+      status: true,
+      unit: {
+        select: {
+          building: {
             select: {
-              status: true
+              label: true
             }
           }
         }
       }
     },
-    orderBy: { label: "asc" }
+    take: 500
   });
 
-  return buildings
-    .map((building) => {
-      const packages = building.units.flatMap((unit) => unit.packages);
-      const pendingPackages = packages.filter((pkg) =>
-        pkg.status === "PENDING" || pkg.status === "NOTIFIED"
-      ).length;
+  const activity = new Map<string, BuildingActivity>();
 
-      return {
-        buildingLabel: building.label,
-        totalPackages: packages.length,
-        pendingPackages
-      };
-    })
+  packages.forEach((pkg) => {
+    const buildingLabel = pkg.unit.building.label;
+    const current = activity.get(buildingLabel) ?? {
+      buildingLabel,
+      totalPackages: 0,
+      pendingPackages: 0
+    };
+
+    current.totalPackages += 1;
+
+    if (pkg.status === "PENDING" || pkg.status === "NOTIFIED") {
+      current.pendingPackages += 1;
+    }
+
+    activity.set(buildingLabel, current);
+  });
+
+  return Array.from(activity.values())
     .sort((left, right) => right.totalPackages - left.totalPackages);
 }
 
