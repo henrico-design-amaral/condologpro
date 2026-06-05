@@ -8,6 +8,7 @@
         "dev:host": "next dev -H 0.0.0.0",
         "build": "next build",
         "start": "next start",
+        "measure:routes": "node scripts/measure-routes.mjs",
         "typecheck": "tsc --noEmit",
         "prisma:validate": "prisma validate",
         "prisma:generate": "prisma generate",

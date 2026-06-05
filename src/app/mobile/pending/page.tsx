@@ -14,16 +14,52 @@ type MobilePendingPageProps = {
     q?: string;
     status?: string;
     overdue?: string;
+    page?: string;
   }>;
 };
 
 const PENDING_STATUSES: PackageStatus[] = ["PENDING", "NOTIFIED"];
+const PAGE_SIZE = 30;
+
+function parsePage(value?: string) {
+  const page = Number(value);
+  return Number.isInteger(page) && page > 0 ? page : 1;
+}
+
+function pendingPageHref(params: {
+  q?: string;
+  status?: string;
+  overdue?: boolean;
+  page: number;
+}) {
+  const query = new URLSearchParams();
+
+  if (params.q) {
+    query.set("q", params.q);
+  }
+
+  if (params.status) {
+    query.set("status", params.status);
+  }
+
+  if (params.overdue) {
+    query.set("overdue", "1");
+  }
+
+  if (params.page > 1) {
+    query.set("page", String(params.page));
+  }
+
+  const queryString = query.toString();
+  return queryString ? `/mobile/pending?${queryString}` : "/mobile/pending";
+}
 
 export default async function MobilePendingPage({ searchParams }: MobilePendingPageProps) {
   const params = await searchParams;
   const q = params.q?.trim();
   const status = params.status;
   const onlyOverdue = params.overdue === "1";
+  const page = parsePage(params.page);
 
   const statusFilter: { status: PackageStatus | { in: PackageStatus[] } } =
     status === "PENDING" || status === "NOTIFIED"
@@ -70,10 +106,13 @@ export default async function MobilePendingPage({ searchParams }: MobilePendingP
     orderBy: {
       receivedAt: "desc"
     },
-    take: 60
+    skip: (page - 1) * PAGE_SIZE,
+    take: PAGE_SIZE + 1
   });
+  const hasNextPage = packages.length > PAGE_SIZE;
+  const visiblePackages = packages.slice(0, PAGE_SIZE);
 
-  const overdueCount = packages.filter((pkg) => isPackageOverdue(pkg)).length;
+  const overdueCount = visiblePackages.filter((pkg) => isPackageOverdue(pkg)).length;
 
   return (
     <main className="min-h-screen bg-neutral-950 px-4 py-6 text-white">
@@ -94,7 +133,7 @@ export default async function MobilePendingPage({ searchParams }: MobilePendingP
           </div>
           <div className="flex flex-col items-end gap-1">
             <span className="rounded-full bg-neutral-800 px-3 py-1 text-sm font-semibold text-neutral-100">
-              {packages.length}
+              {visiblePackages.length}
             </span>
             {overdueCount > 0 ? (
               <span className="rounded-full bg-rose-500/20 px-3 py-1 text-xs font-semibold text-rose-100">
@@ -156,7 +195,7 @@ export default async function MobilePendingPage({ searchParams }: MobilePendingP
           </div>
         </form>
 
-        {packages.length === 0 ? (
+        {visiblePackages.length === 0 ? (
           <div className="mt-6 rounded-[8px] border border-neutral-700 bg-neutral-900 p-5 text-center">
             <PackageOpen className="mx-auto h-8 w-8 text-neutral-500" aria-hidden="true" />
             <p className="mt-3 font-semibold">Nenhuma encomenda pendente</p>
@@ -166,7 +205,7 @@ export default async function MobilePendingPage({ searchParams }: MobilePendingP
           </div>
         ) : (
           <ul className="mt-6 grid gap-3">
-            {packages.map((pkg) => {
+            {visiblePackages.map((pkg) => {
               const overdue = isPackageOverdue(pkg);
               return (
                 <li key={pkg.id}>
@@ -206,6 +245,27 @@ export default async function MobilePendingPage({ searchParams }: MobilePendingP
             })}
           </ul>
         )}
+        <nav className="mt-5 flex items-center justify-between gap-3 text-sm">
+          <Link
+            href={pendingPageHref({ q, status, overdue: onlyOverdue, page: Math.max(page - 1, 1) })}
+            aria-disabled={page === 1}
+            className={`flex min-h-12 flex-1 items-center justify-center rounded-[8px] border border-neutral-700 px-3 font-semibold focus:outline-none focus:ring-2 focus:ring-white ${
+              page === 1 ? "pointer-events-none text-neutral-600" : "text-neutral-200"
+            }`}
+          >
+            Anterior
+          </Link>
+          <span className="min-w-20 text-center font-medium text-neutral-400">Página {page}</span>
+          <Link
+            href={pendingPageHref({ q, status, overdue: onlyOverdue, page: page + 1 })}
+            aria-disabled={!hasNextPage}
+            className={`flex min-h-12 flex-1 items-center justify-center rounded-[8px] border border-neutral-700 px-3 font-semibold focus:outline-none focus:ring-2 focus:ring-white ${
+              hasNextPage ? "text-neutral-200" : "pointer-events-none text-neutral-600"
+            }`}
+          >
+            Próxima
+          </Link>
+        </nav>
       </section>
     </main>
   );

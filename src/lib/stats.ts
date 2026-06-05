@@ -21,6 +21,14 @@ export type BuildingActivity = {
   pendingPackages: number;
 };
 
+export type MobileSummaryStats = {
+  pendingCount: number;
+  notifiedCount: number;
+  todayCount: number;
+  pickedUpTodayCount: number;
+  overdueCount: number;
+};
+
 function startOfDay(date: Date) {
   const result = new Date(date);
   result.setHours(0, 0, 0, 0);
@@ -40,126 +48,216 @@ export function overdueThresholdDate() {
   return now;
 }
 
+function isSqliteDatasource() {
+  return (process.env.DATABASE_URL ?? "").startsWith("file:");
+}
+
+function asNumber(value: unknown) {
+  if (typeof value === "bigint") {
+    return Number(value);
+  }
+
+  if (typeof value === "number") {
+    return value;
+  }
+
+  if (typeof value === "string") {
+    return Number(value);
+  }
+
+  return 0;
+}
+
+function asNullableNumber(value: unknown) {
+  if (value === null || value === undefined) {
+    return null;
+  }
+
+  return asNumber(value);
+}
+
 export async function getDashboardStats(): Promise<DashboardStats> {
   const today = startOfDay(new Date());
   const yesterday = startOfYesterday();
   const overdueLimit = overdueThresholdDate();
 
-  const [
-    todayCount,
-    yesterdayCount,
-    pendingCount,
-    notifiedCount,
-    pickedUpTodayCount,
-    overdueCount,
-    pickedUpRecent,
-    activeResidentCount,
-    totalBuildings,
-    totalUnits
-  ] = await prisma.$transaction([
-    prisma.package.count({
-      where: { receivedAt: { gte: today } }
-    }),
-    prisma.package.count({
-      where: { receivedAt: { gte: yesterday, lt: today } }
-    }),
-    prisma.package.count({
-      where: { status: "PENDING" }
-    }),
-    prisma.package.count({
-      where: { status: "NOTIFIED" }
-    }),
-    prisma.package.count({
-      where: { status: "PICKED_UP", pickedUpAt: { gte: today } }
-    }),
-    prisma.package.count({
-      where: {
-        status: { in: ["PENDING", "NOTIFIED"] },
-        receivedAt: { lt: overdueLimit }
-      }
-    }),
-    prisma.package.findMany({
-      where: {
-        status: "PICKED_UP",
-        pickedUpAt: { not: null }
-      },
-      select: { receivedAt: true, pickedUpAt: true },
-      orderBy: { pickedUpAt: "desc" },
-      take: 40
-    }),
-    prisma.resident.count({ where: { isActive: true } }),
-    prisma.building.count(),
-    prisma.unit.count()
-  ]);
+  const rows = isSqliteDatasource()
+    ? await prisma.$queryRaw<
+        Array<{
+          todayCount: unknown;
+          yesterdayCount: unknown;
+          pendingCount: unknown;
+          notifiedCount: unknown;
+          pickedUpTodayCount: unknown;
+          overdueCount: unknown;
+          averagePickupHours: unknown;
+          activeResidentCount: unknown;
+          totalBuildings: unknown;
+          totalUnits: unknown;
+        }>
+      >`
+        SELECT
+          COALESCE(SUM(CASE WHEN receivedAt >= ${today} THEN 1 ELSE 0 END), 0) AS todayCount,
+          COALESCE(SUM(CASE WHEN receivedAt >= ${yesterday} AND receivedAt < ${today} THEN 1 ELSE 0 END), 0) AS yesterdayCount,
+          COALESCE(SUM(CASE WHEN status = 'PENDING' THEN 1 ELSE 0 END), 0) AS pendingCount,
+          COALESCE(SUM(CASE WHEN status = 'NOTIFIED' THEN 1 ELSE 0 END), 0) AS notifiedCount,
+          COALESCE(SUM(CASE WHEN status = 'PICKED_UP' AND pickedUpAt >= ${today} THEN 1 ELSE 0 END), 0) AS pickedUpTodayCount,
+          COALESCE(SUM(CASE WHEN status IN ('PENDING', 'NOTIFIED') AND receivedAt < ${overdueLimit} THEN 1 ELSE 0 END), 0) AS overdueCount,
+          (
+            SELECT AVG((pickedUpAt - receivedAt) / 3600000.0)
+            FROM (
+              SELECT receivedAt, pickedUpAt
+              FROM Package
+              WHERE status = 'PICKED_UP' AND pickedUpAt IS NOT NULL
+              ORDER BY pickedUpAt DESC
+              LIMIT 40
+            ) picked
+          ) AS averagePickupHours,
+          (SELECT COUNT(*) FROM Resident WHERE isActive = 1) AS activeResidentCount,
+          (SELECT COUNT(*) FROM Building) AS totalBuildings,
+          (SELECT COUNT(*) FROM Unit) AS totalUnits
+        FROM Package
+      `
+    : await prisma.$queryRaw<
+        Array<{
+          todayCount: unknown;
+          yesterdayCount: unknown;
+          pendingCount: unknown;
+          notifiedCount: unknown;
+          pickedUpTodayCount: unknown;
+          overdueCount: unknown;
+          averagePickupHours: unknown;
+          activeResidentCount: unknown;
+          totalBuildings: unknown;
+          totalUnits: unknown;
+        }>
+      >`
+        SELECT
+          COALESCE(SUM(CASE WHEN "receivedAt" >= ${today} THEN 1 ELSE 0 END), 0) AS "todayCount",
+          COALESCE(SUM(CASE WHEN "receivedAt" >= ${yesterday} AND "receivedAt" < ${today} THEN 1 ELSE 0 END), 0) AS "yesterdayCount",
+          COALESCE(SUM(CASE WHEN status = 'PENDING' THEN 1 ELSE 0 END), 0) AS "pendingCount",
+          COALESCE(SUM(CASE WHEN status = 'NOTIFIED' THEN 1 ELSE 0 END), 0) AS "notifiedCount",
+          COALESCE(SUM(CASE WHEN status = 'PICKED_UP' AND "pickedUpAt" >= ${today} THEN 1 ELSE 0 END), 0) AS "pickedUpTodayCount",
+          COALESCE(SUM(CASE WHEN status IN ('PENDING', 'NOTIFIED') AND "receivedAt" < ${overdueLimit} THEN 1 ELSE 0 END), 0) AS "overdueCount",
+          (
+            SELECT AVG(EXTRACT(EPOCH FROM ("pickedUpAt" - "receivedAt")) / 3600.0)
+            FROM (
+              SELECT "receivedAt", "pickedUpAt"
+              FROM "Package"
+              WHERE status = 'PICKED_UP' AND "pickedUpAt" IS NOT NULL
+              ORDER BY "pickedUpAt" DESC
+              LIMIT 40
+            ) picked
+          ) AS "averagePickupHours",
+          (SELECT COUNT(*) FROM "Resident" WHERE "isActive" = true) AS "activeResidentCount",
+          (SELECT COUNT(*) FROM "Building") AS "totalBuildings",
+          (SELECT COUNT(*) FROM "Unit") AS "totalUnits"
+        FROM "Package"
+      `;
 
-  let averagePickupHours: number | null = null;
-
-  if (pickedUpRecent.length > 0) {
-    const totalHours = pickedUpRecent.reduce((accumulator, pkg) => {
-      if (!pkg.pickedUpAt) {
-        return accumulator;
-      }
-
-      const diffMs = pkg.pickedUpAt.getTime() - pkg.receivedAt.getTime();
-      const hours = Math.max(diffMs / (60 * 60 * 1000), 0);
-      return accumulator + hours;
-    }, 0);
-
-    averagePickupHours = totalHours / pickedUpRecent.length;
-  }
+  const stats = rows[0];
 
   return {
-    todayCount,
-    yesterdayCount,
-    pendingCount,
-    notifiedCount,
-    pickedUpTodayCount,
-    overdueCount,
-    averagePickupHours,
-    activeResidentCount,
-    totalBuildings,
-    totalUnits
+    todayCount: asNumber(stats?.todayCount),
+    yesterdayCount: asNumber(stats?.yesterdayCount),
+    pendingCount: asNumber(stats?.pendingCount),
+    notifiedCount: asNumber(stats?.notifiedCount),
+    pickedUpTodayCount: asNumber(stats?.pickedUpTodayCount),
+    overdueCount: asNumber(stats?.overdueCount),
+    averagePickupHours: asNullableNumber(stats?.averagePickupHours),
+    activeResidentCount: asNumber(stats?.activeResidentCount),
+    totalBuildings: asNumber(stats?.totalBuildings),
+    totalUnits: asNumber(stats?.totalUnits)
   };
 }
 
-export async function getBuildingActivity(): Promise<BuildingActivity[]> {
-  const packages = await prisma.package.findMany({
-    select: {
-      status: true,
-      unit: {
-        select: {
-          building: {
-            select: {
-              label: true
-            }
-          }
-        }
-      }
-    },
-    take: 500
-  });
+export async function getBuildingActivity(limit = 5): Promise<BuildingActivity[]> {
+  const rows = isSqliteDatasource()
+    ? await prisma.$queryRaw<
+        Array<{ buildingLabel: string; totalPackages: unknown; pendingPackages: unknown }>
+      >`
+        SELECT
+          b.label AS buildingLabel,
+          COUNT(p.id) AS totalPackages,
+          COALESCE(SUM(CASE WHEN p.status IN ('PENDING', 'NOTIFIED') THEN 1 ELSE 0 END), 0) AS pendingPackages
+        FROM Package p
+        INNER JOIN Unit u ON u.id = p.unitId
+        INNER JOIN Building b ON b.id = u.buildingId
+        GROUP BY b.label
+        ORDER BY totalPackages DESC, b.label ASC
+        LIMIT ${limit}
+      `
+    : await prisma.$queryRaw<
+        Array<{ buildingLabel: string; totalPackages: unknown; pendingPackages: unknown }>
+      >`
+        SELECT
+          b.label AS "buildingLabel",
+          COUNT(p.id) AS "totalPackages",
+          COALESCE(SUM(CASE WHEN p.status IN ('PENDING', 'NOTIFIED') THEN 1 ELSE 0 END), 0) AS "pendingPackages"
+        FROM "Package" p
+        INNER JOIN "Unit" u ON u.id = p."unitId"
+        INNER JOIN "Building" b ON b.id = u."buildingId"
+        GROUP BY b.label
+        ORDER BY "totalPackages" DESC, b.label ASC
+        LIMIT ${limit}
+      `;
 
-  const activity = new Map<string, BuildingActivity>();
+  return rows.map((row) => ({
+    buildingLabel: row.buildingLabel,
+    totalPackages: asNumber(row.totalPackages),
+    pendingPackages: asNumber(row.pendingPackages)
+  }));
+}
 
-  packages.forEach((pkg) => {
-    const buildingLabel = pkg.unit.building.label;
-    const current = activity.get(buildingLabel) ?? {
-      buildingLabel,
-      totalPackages: 0,
-      pendingPackages: 0
-    };
+export async function getMobileSummaryStats(): Promise<MobileSummaryStats> {
+  const today = startOfDay(new Date());
+  const overdueLimit = overdueThresholdDate();
 
-    current.totalPackages += 1;
+  const rows = isSqliteDatasource()
+    ? await prisma.$queryRaw<
+        Array<{
+          pendingCount: unknown;
+          notifiedCount: unknown;
+          todayCount: unknown;
+          pickedUpTodayCount: unknown;
+          overdueCount: unknown;
+        }>
+      >`
+        SELECT
+          COALESCE(SUM(CASE WHEN status = 'PENDING' THEN 1 ELSE 0 END), 0) AS pendingCount,
+          COALESCE(SUM(CASE WHEN status = 'NOTIFIED' THEN 1 ELSE 0 END), 0) AS notifiedCount,
+          COALESCE(SUM(CASE WHEN receivedAt >= ${today} THEN 1 ELSE 0 END), 0) AS todayCount,
+          COALESCE(SUM(CASE WHEN status = 'PICKED_UP' AND pickedUpAt >= ${today} THEN 1 ELSE 0 END), 0) AS pickedUpTodayCount,
+          COALESCE(SUM(CASE WHEN status IN ('PENDING', 'NOTIFIED') AND receivedAt < ${overdueLimit} THEN 1 ELSE 0 END), 0) AS overdueCount
+        FROM Package
+      `
+    : await prisma.$queryRaw<
+        Array<{
+          pendingCount: unknown;
+          notifiedCount: unknown;
+          todayCount: unknown;
+          pickedUpTodayCount: unknown;
+          overdueCount: unknown;
+        }>
+      >`
+        SELECT
+          COALESCE(SUM(CASE WHEN status = 'PENDING' THEN 1 ELSE 0 END), 0) AS "pendingCount",
+          COALESCE(SUM(CASE WHEN status = 'NOTIFIED' THEN 1 ELSE 0 END), 0) AS "notifiedCount",
+          COALESCE(SUM(CASE WHEN "receivedAt" >= ${today} THEN 1 ELSE 0 END), 0) AS "todayCount",
+          COALESCE(SUM(CASE WHEN status = 'PICKED_UP' AND "pickedUpAt" >= ${today} THEN 1 ELSE 0 END), 0) AS "pickedUpTodayCount",
+          COALESCE(SUM(CASE WHEN status IN ('PENDING', 'NOTIFIED') AND "receivedAt" < ${overdueLimit} THEN 1 ELSE 0 END), 0) AS "overdueCount"
+        FROM "Package"
+      `;
 
-    if (pkg.status === "PENDING" || pkg.status === "NOTIFIED") {
-      current.pendingPackages += 1;
-    }
+  const stats = rows[0];
 
-    activity.set(buildingLabel, current);
-  });
-
-  return Array.from(activity.values())
-    .sort((left, right) => right.totalPackages - left.totalPackages);
+  return {
+    pendingCount: asNumber(stats?.pendingCount),
+    notifiedCount: asNumber(stats?.notifiedCount),
+    todayCount: asNumber(stats?.todayCount),
+    pickedUpTodayCount: asNumber(stats?.pickedUpTodayCount),
+    overdueCount: asNumber(stats?.overdueCount)
+  };
 }
 
 export function isPackageOverdue(pkg: { status: string; receivedAt: Date }) {
