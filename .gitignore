@@ -1,4 +1,4 @@
-﻿# dependencies
+# dependencies
 node_modules/
 .pnpm-store/
 
@@ -47,3 +47,12 @@ tsconfig.tsbuildinfo
 # local database
 prisma/dev.db
 prisma/dev.db-journal
+
+# vercel local project metadata
+.vercel/
+
+# local env secrets
+.env
+.env.local
+.env.*.local
+!.env.example
