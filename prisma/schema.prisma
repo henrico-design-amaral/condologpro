@@ -96,6 +96,8 @@ model Resident {
   @@index([organizationId])
   @@index([unitId])
   @@index([phone])
+  @@index([name])
+  @@index([isActive])
 }
 
 model Operator {
@@ -140,6 +142,7 @@ model Package {
   @@index([residentId])
   @@index([status])
   @@index([receivedAt])
+  @@index([pickedUpAt])
 }
 
 model PackageEvent {

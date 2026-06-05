@@ -4,7 +4,7 @@ import { PackageStatus, Prisma } from "@prisma/client";
 import { StatusBadge } from "@/components/status-badge";
 import { prisma } from "@/lib/prisma";
 import { formatDateTime, formatRelativeHours } from "@/lib/format";
-import { isPackageOverdue } from "@/lib/stats";
+import { isPackageOverdue, overdueThresholdDate } from "@/lib/stats";
 
 export const dynamic = "force-dynamic";
 
@@ -24,12 +24,6 @@ function parsePackageStatus(value?: string) {
   return Object.values(PackageStatus).includes(value as PackageStatus)
     ? (value as PackageStatus)
     : null;
-}
-
-function overdueThresholdDate() {
-  const now = new Date();
-  now.setHours(now.getHours() - 24);
-  return now;
 }
 
 export default async function AdminPackagesPage({ searchParams }: AdminPackagesPageProps) {
@@ -62,18 +56,33 @@ export default async function AdminPackagesPage({ searchParams }: AdminPackagesP
 
   const packages = await prisma.package.findMany({
     where,
-    include: {
-      resident: true,
+    select: {
+      id: true,
+      status: true,
+      packageCode: true,
+      carrier: true,
+      receivedAt: true,
+      pickedUpAt: true,
+      resident: {
+        select: {
+          name: true
+        }
+      },
       unit: {
-        include: {
-          building: true
+        select: {
+          number: true,
+          building: {
+            select: {
+              label: true
+            }
+          }
         }
       }
     },
     orderBy: {
       receivedAt: "desc"
     },
-    take: 120
+    take: 80
   });
 
   return (
@@ -95,27 +104,27 @@ export default async function AdminPackagesPage({ searchParams }: AdminPackagesP
           <div className="flex flex-wrap gap-2">
             <Link
               href="/admin/packages?overdue=1"
-              className="inline-flex min-h-11 items-center rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-900 focus:outline-none focus:ring-2 focus:ring-rose-400"
+              className="inline-flex min-h-11 items-center rounded-[8px] border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-900 focus:outline-none focus:ring-2 focus:ring-rose-400"
             >
               Ver atrasadas (24h+)
             </Link>
             <Link
               href="/mobile/intake"
-              className="inline-flex min-h-11 items-center rounded-lg bg-neutral-950 px-4 py-3 text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-neutral-950 focus:ring-offset-2 focus:ring-offset-neutral-100"
+              className="inline-flex min-h-11 items-center rounded-[8px] bg-neutral-950 px-4 py-3 text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-neutral-950 focus:ring-offset-2 focus:ring-offset-neutral-100"
             >
               Nova encomenda
             </Link>
           </div>
         </header>
 
-        <form className="mt-6 flex flex-wrap items-end gap-3 rounded-xl border border-neutral-200 bg-white p-4">
+        <form className="mt-6 flex flex-wrap items-end gap-3 rounded-[8px] border border-neutral-200 bg-white p-4">
           <label className="grid gap-1 text-xs font-semibold uppercase tracking-wide text-neutral-500">
             Busca
             <input
               name="q"
               defaultValue={q}
               placeholder="Morador, bloco, apto, código"
-              className="min-h-11 w-72 rounded-lg border border-neutral-300 px-3 text-base font-normal text-neutral-950 outline-none focus:ring-2 focus:ring-neutral-950"
+              className="min-h-11 w-72 rounded-[8px] border border-neutral-300 px-3 text-base font-normal text-neutral-950 outline-none focus:ring-2 focus:ring-neutral-950"
             />
           </label>
           <label className="grid gap-1 text-xs font-semibold uppercase tracking-wide text-neutral-500">
@@ -123,7 +132,7 @@ export default async function AdminPackagesPage({ searchParams }: AdminPackagesP
             <select
               name="status"
               defaultValue={status ?? "ALL"}
-              className="min-h-11 rounded-lg border border-neutral-300 bg-white px-3 text-base font-normal text-neutral-950 outline-none focus:ring-2 focus:ring-neutral-950"
+              className="min-h-11 rounded-[8px] border border-neutral-300 bg-white px-3 text-base font-normal text-neutral-950 outline-none focus:ring-2 focus:ring-neutral-950"
             >
               <option value="ALL">Todos</option>
               <option value="PENDING">Pendentes</option>
@@ -132,7 +141,7 @@ export default async function AdminPackagesPage({ searchParams }: AdminPackagesP
               <option value="CANCELLED">Cancelados</option>
             </select>
           </label>
-          <label className="flex min-h-11 items-center gap-2 rounded-lg border border-neutral-300 bg-white px-3 text-sm text-neutral-700">
+          <label className="flex min-h-11 items-center gap-2 rounded-[8px] border border-neutral-300 bg-white px-3 text-sm text-neutral-700">
             <input
               type="checkbox"
               name="overdue"
@@ -144,19 +153,23 @@ export default async function AdminPackagesPage({ searchParams }: AdminPackagesP
           </label>
           <button
             type="submit"
-            className="min-h-11 rounded-lg bg-neutral-950 px-4 py-3 text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-neutral-950 focus:ring-offset-2 focus:ring-offset-white"
+            className="min-h-11 rounded-[8px] bg-neutral-950 px-4 py-3 text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-neutral-950 focus:ring-offset-2 focus:ring-offset-white"
           >
             Aplicar filtros
           </button>
           <Link
             href="/admin/packages"
-            className="min-h-11 rounded-lg border border-neutral-200 px-4 py-3 text-sm font-semibold text-neutral-700 focus:outline-none focus:ring-2 focus:ring-neutral-950 focus:ring-offset-2 focus:ring-offset-white"
+            className="min-h-11 rounded-[8px] border border-neutral-200 px-4 py-3 text-sm font-semibold text-neutral-700 focus:outline-none focus:ring-2 focus:ring-neutral-950 focus:ring-offset-2 focus:ring-offset-white"
           >
             Limpar
           </Link>
         </form>
 
-        <div className="mt-6 overflow-hidden rounded-xl border border-neutral-200 bg-white">
+        <div className="mt-6 rounded-[8px] border border-neutral-200 bg-white">
+          <div className="flex items-center justify-between gap-3 border-b border-neutral-200 px-5 py-3 text-sm">
+            <p className="font-semibold text-neutral-800">Resultado operacional</p>
+            <p className="text-neutral-500">Mostrando até 80 registros</p>
+          </div>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[960px] border-collapse text-sm">
               <thead className="bg-neutral-50 text-left text-xs uppercase tracking-wide text-neutral-500">

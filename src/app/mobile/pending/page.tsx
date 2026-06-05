@@ -45,18 +45,32 @@ export default async function MobilePendingPage({ searchParams }: MobilePendingP
           }
         : {})
     },
-    include: {
-      resident: true,
+    select: {
+      id: true,
+      status: true,
+      packageCode: true,
+      carrier: true,
+      receivedAt: true,
+      resident: {
+        select: {
+          name: true
+        }
+      },
       unit: {
-        include: {
-          building: true
+        select: {
+          number: true,
+          building: {
+            select: {
+              label: true
+            }
+          }
         }
       }
     },
     orderBy: {
       receivedAt: "desc"
     },
-    take: 100
+    take: 60
   });
 
   const overdueCount = packages.filter((pkg) => isPackageOverdue(pkg)).length;
@@ -90,7 +104,7 @@ export default async function MobilePendingPage({ searchParams }: MobilePendingP
           </div>
         </div>
 
-        <form className="mt-5 flex flex-col gap-3 rounded-[12px] border border-neutral-800 bg-neutral-900 p-3">
+        <form className="mt-5 flex flex-col gap-3 rounded-[8px] border border-neutral-800 bg-neutral-900 p-3">
           <label className="flex min-h-12 items-center gap-2 rounded-[8px] border border-neutral-700 bg-neutral-950 px-3 focus-within:ring-2 focus-within:ring-emerald-300">
             <Search className="h-4 w-4 text-neutral-500" aria-hidden="true" />
             <input
@@ -158,7 +172,7 @@ export default async function MobilePendingPage({ searchParams }: MobilePendingP
                 <li key={pkg.id}>
                   <Link
                     href={`/mobile/package/${pkg.id}`}
-                    className={`block rounded-[12px] border bg-neutral-900 p-4 focus:outline-none focus:ring-2 focus:ring-emerald-300 ${
+                    className={`block rounded-[8px] border bg-neutral-900 p-4 focus:outline-none focus:ring-2 focus:ring-emerald-300 ${
                       overdue ? "border-rose-400/60" : "border-neutral-700"
                     }`}
                   >
