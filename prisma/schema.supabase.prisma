@@ -57,6 +57,7 @@ model Building {
 
   @@unique([organizationId, label])
   @@index([organizationId])
+  @@index([label])
 }
 
 model Unit {
@@ -76,6 +77,7 @@ model Unit {
   @@unique([buildingId, number])
   @@index([organizationId])
   @@index([buildingId])
+  @@index([number])
 }
 
 model Resident {
@@ -99,6 +101,7 @@ model Resident {
   @@index([phone])
   @@index([name])
   @@index([isActive])
+  @@index([isActive, name])
 }
 
 model Operator {
@@ -144,6 +147,8 @@ model Package {
   @@index([status])
   @@index([receivedAt])
   @@index([pickedUpAt])
+  @@index([status, receivedAt])
+  @@index([status, pickedUpAt])
 }
 
 model PackageEvent {

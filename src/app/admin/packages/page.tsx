@@ -13,8 +13,11 @@ type AdminPackagesPageProps = {
     status?: string;
     q?: string;
     overdue?: string;
+    page?: string;
   }>;
 };
+
+const PAGE_SIZE = 50;
 
 function parsePackageStatus(value?: string) {
   if (!value || value === "ALL") {
@@ -26,12 +29,46 @@ function parsePackageStatus(value?: string) {
     : null;
 }
 
+function parsePage(value?: string) {
+  const page = Number(value);
+  return Number.isInteger(page) && page > 0 ? page : 1;
+}
+
+function packagePageHref(params: {
+  q?: string;
+  status?: string;
+  overdue?: boolean;
+  page: number;
+}) {
+  const query = new URLSearchParams();
+
+  if (params.q) {
+    query.set("q", params.q);
+  }
+
+  if (params.status) {
+    query.set("status", params.status);
+  }
+
+  if (params.overdue) {
+    query.set("overdue", "1");
+  }
+
+  if (params.page > 1) {
+    query.set("page", String(params.page));
+  }
+
+  const queryString = query.toString();
+  return queryString ? `/admin/packages?${queryString}` : "/admin/packages";
+}
+
 export default async function AdminPackagesPage({ searchParams }: AdminPackagesPageProps) {
   const params = await searchParams;
   const status = params.status;
   const q = params.q?.trim();
   const isOverdueFilter = params.overdue === "1";
   const parsedStatus = parsePackageStatus(status);
+  const page = parsePage(params.page);
 
   const where: Prisma.PackageWhereInput = {
     ...(parsedStatus ? { status: parsedStatus } : {}),
@@ -82,8 +119,13 @@ export default async function AdminPackagesPage({ searchParams }: AdminPackagesP
     orderBy: {
       receivedAt: "desc"
     },
-    take: 80
+    skip: (page - 1) * PAGE_SIZE,
+    take: PAGE_SIZE + 1
   });
+  const hasNextPage = packages.length > PAGE_SIZE;
+  const visiblePackages = packages.slice(0, PAGE_SIZE);
+  const visibleStart = visiblePackages.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const visibleEnd = (page - 1) * PAGE_SIZE + visiblePackages.length;
 
   return (
     <main className="min-h-screen bg-neutral-100 px-6 py-8 text-neutral-950">
@@ -168,7 +210,11 @@ export default async function AdminPackagesPage({ searchParams }: AdminPackagesP
         <div className="mt-6 rounded-[8px] border border-neutral-200 bg-white">
           <div className="flex items-center justify-between gap-3 border-b border-neutral-200 px-5 py-3 text-sm">
             <p className="font-semibold text-neutral-800">Resultado operacional</p>
-            <p className="text-neutral-500">Mostrando até 80 registros</p>
+            <p className="text-neutral-500">
+              {visiblePackages.length > 0
+                ? `Mostrando ${visibleStart}-${visibleEnd}`
+                : "Nenhum registro nesta página"}
+            </p>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[960px] border-collapse text-sm">
@@ -184,7 +230,7 @@ export default async function AdminPackagesPage({ searchParams }: AdminPackagesP
                 </tr>
               </thead>
               <tbody>
-                {packages.map((pkg) => {
+                {visiblePackages.map((pkg) => {
                   const overdue = isPackageOverdue(pkg);
                   return (
                     <tr key={pkg.id} className="border-t border-neutral-100 hover:bg-neutral-50">
@@ -212,7 +258,7 @@ export default async function AdminPackagesPage({ searchParams }: AdminPackagesP
                     </tr>
                   );
                 })}
-                {packages.length === 0 ? (
+                {visiblePackages.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="px-5 py-10 text-center text-neutral-500">
                       Nenhuma encomenda encontrada para os filtros aplicados.
@@ -222,6 +268,27 @@ export default async function AdminPackagesPage({ searchParams }: AdminPackagesP
               </tbody>
             </table>
           </div>
+          <nav className="flex items-center justify-between gap-3 border-t border-neutral-200 px-5 py-3 text-sm">
+            <Link
+              href={packagePageHref({ q, status, overdue: isOverdueFilter, page: Math.max(page - 1, 1) })}
+              aria-disabled={page === 1}
+              className={`rounded-[8px] border border-neutral-200 px-3 py-2 font-semibold focus:outline-none focus:ring-2 focus:ring-neutral-950 ${
+                page === 1 ? "pointer-events-none text-neutral-400" : "text-neutral-700"
+              }`}
+            >
+              Anterior
+            </Link>
+            <span className="font-medium text-neutral-500">Página {page}</span>
+            <Link
+              href={packagePageHref({ q, status, overdue: isOverdueFilter, page: page + 1 })}
+              aria-disabled={!hasNextPage}
+              className={`rounded-[8px] border border-neutral-200 px-3 py-2 font-semibold focus:outline-none focus:ring-2 focus:ring-neutral-950 ${
+                hasNextPage ? "text-neutral-700" : "pointer-events-none text-neutral-400"
+              }`}
+            >
+              Próxima
+            </Link>
+          </nav>
         </div>
       </section>
     </main>

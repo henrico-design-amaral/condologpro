@@ -1,27 +1,13 @@
 import { Camera, ClipboardList, PackageCheck, ScrollText, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 
-import { prisma } from "@/lib/prisma";
-import { overdueThresholdDate } from "@/lib/stats";
+import { getMobileSummaryStats } from "@/lib/stats";
 
 export const dynamic = "force-dynamic";
 
 export default async function MobileHomePage() {
-  const startOfDay = new Date(new Date().setHours(0, 0, 0, 0));
-  const [pendingCount, notifiedCount, todayCount, pickedUpTodayCount, overdueCount] = await Promise.all([
-    prisma.package.count({ where: { status: "PENDING" } }),
-    prisma.package.count({ where: { status: "NOTIFIED" } }),
-    prisma.package.count({ where: { receivedAt: { gte: startOfDay } } }),
-    prisma.package.count({
-      where: { status: "PICKED_UP", pickedUpAt: { gte: startOfDay } }
-    }),
-    prisma.package.count({
-      where: {
-        status: { in: ["PENDING", "NOTIFIED"] },
-        receivedAt: { lt: overdueThresholdDate() }
-      }
-    })
-  ]);
+  const { pendingCount, notifiedCount, todayCount, pickedUpTodayCount, overdueCount } =
+    await getMobileSummaryStats();
 
   const totalPending = pendingCount + notifiedCount;
 

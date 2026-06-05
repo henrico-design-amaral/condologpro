@@ -9,13 +9,45 @@ type AdminResidentsPageProps = {
   searchParams: Promise<{
     q?: string;
     building?: string;
+    page?: string;
   }>;
 };
+
+const PAGE_SIZE = 60;
+
+function parsePage(value?: string) {
+  const page = Number(value);
+  return Number.isInteger(page) && page > 0 ? page : 1;
+}
+
+function residentsPageHref(params: {
+  q?: string;
+  building?: string;
+  page: number;
+}) {
+  const query = new URLSearchParams();
+
+  if (params.q) {
+    query.set("q", params.q);
+  }
+
+  if (params.building) {
+    query.set("building", params.building);
+  }
+
+  if (params.page > 1) {
+    query.set("page", String(params.page));
+  }
+
+  const queryString = query.toString();
+  return queryString ? `/admin/residents?${queryString}` : "/admin/residents";
+}
 
 export default async function AdminResidentsPage({ searchParams }: AdminResidentsPageProps) {
   const params = await searchParams;
   const q = params.q?.trim();
   const buildingFilter = params.building?.trim();
+  const page = parsePage(params.page);
 
   const where: Prisma.ResidentWhereInput = {
     isActive: true,
@@ -61,13 +93,18 @@ export default async function AdminResidentsPage({ searchParams }: AdminResident
         }
       },
       orderBy: [{ isPrimary: "desc" }, { name: "asc" }],
-      take: 120
+      skip: (page - 1) * PAGE_SIZE,
+      take: PAGE_SIZE + 1
     }),
     prisma.building.findMany({
       orderBy: { label: "asc" },
       select: { label: true }
     })
   ]);
+  const hasNextPage = residents.length > PAGE_SIZE;
+  const visibleResidents = residents.slice(0, PAGE_SIZE);
+  const visibleStart = visibleResidents.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const visibleEnd = (page - 1) * PAGE_SIZE + visibleResidents.length;
 
   return (
     <main className="min-h-screen bg-neutral-100 px-6 py-8 text-neutral-950">
@@ -82,7 +119,7 @@ export default async function AdminResidentsPage({ searchParams }: AdminResident
             </Link>
             <h1 className="mt-3 text-3xl font-semibold tracking-tight">Moradores</h1>
             <p className="mt-2 text-sm text-neutral-600">
-              Base usada pelo autocomplete da portaria. {residents.length} resultado(s).
+              Base usada pelo autocomplete da portaria. {visibleResidents.length} resultado(s) nesta página.
             </p>
           </div>
           <Link
@@ -135,7 +172,11 @@ export default async function AdminResidentsPage({ searchParams }: AdminResident
         <div className="mt-6 rounded-[8px] border border-neutral-200 bg-white">
           <div className="flex items-center justify-between gap-3 border-b border-neutral-200 px-5 py-3 text-sm">
             <p className="font-semibold text-neutral-800">Base ativa</p>
-            <p className="text-neutral-500">Mostrando até 120 moradores</p>
+            <p className="text-neutral-500">
+              {visibleResidents.length > 0
+                ? `Mostrando ${visibleStart}-${visibleEnd}`
+                : "Nenhum morador nesta página"}
+            </p>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[860px] border-collapse text-sm">
@@ -150,7 +191,7 @@ export default async function AdminResidentsPage({ searchParams }: AdminResident
                 </tr>
               </thead>
               <tbody>
-                {residents.map((resident) => (
+                {visibleResidents.map((resident) => (
                   <tr key={resident.id} className="border-t border-neutral-100 hover:bg-neutral-50">
                     <td className="px-5 py-3 font-medium text-neutral-900">{resident.name}</td>
                     <td className="px-5 py-3 text-neutral-600">{resident.unit.building.label}</td>
@@ -170,7 +211,7 @@ export default async function AdminResidentsPage({ searchParams }: AdminResident
                     <td className="px-5 py-3 text-neutral-600">{resident.notes ?? "Nenhuma"}</td>
                   </tr>
                 ))}
-                {residents.length === 0 ? (
+                {visibleResidents.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="px-5 py-10 text-center text-neutral-500">
                       Nenhum morador encontrado para os filtros aplicados.
@@ -180,6 +221,27 @@ export default async function AdminResidentsPage({ searchParams }: AdminResident
               </tbody>
             </table>
           </div>
+          <nav className="flex items-center justify-between gap-3 border-t border-neutral-200 px-5 py-3 text-sm">
+            <Link
+              href={residentsPageHref({ q, building: buildingFilter, page: Math.max(page - 1, 1) })}
+              aria-disabled={page === 1}
+              className={`rounded-[8px] border border-neutral-200 px-3 py-2 font-semibold focus:outline-none focus:ring-2 focus:ring-neutral-950 ${
+                page === 1 ? "pointer-events-none text-neutral-400" : "text-neutral-700"
+              }`}
+            >
+              Anterior
+            </Link>
+            <span className="font-medium text-neutral-500">Página {page}</span>
+            <Link
+              href={residentsPageHref({ q, building: buildingFilter, page: page + 1 })}
+              aria-disabled={!hasNextPage}
+              className={`rounded-[8px] border border-neutral-200 px-3 py-2 font-semibold focus:outline-none focus:ring-2 focus:ring-neutral-950 ${
+                hasNextPage ? "text-neutral-700" : "pointer-events-none text-neutral-400"
+              }`}
+            >
+              Próxima
+            </Link>
+          </nav>
         </div>
       </section>
     </main>

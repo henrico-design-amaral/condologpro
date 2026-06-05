@@ -34,7 +34,7 @@ const navItems = [
 export default async function AdminHomePage() {
   const [stats, buildingActivity, recentPackages] = await Promise.all([
     getDashboardStats(),
-    getBuildingActivity(),
+    getBuildingActivity(5),
     prisma.package.findMany({
       select: {
         id: true,
@@ -63,8 +63,6 @@ export default async function AdminHomePage() {
       take: 10
     })
   ]);
-
-  const topBuildings = buildingActivity.slice(0, 5);
 
   const primaryStats = [
     {
@@ -276,7 +274,7 @@ export default async function AdminHomePage() {
               </p>
             </header>
             <ul className="divide-y divide-neutral-100">
-              {topBuildings.map((building) => (
+              {buildingActivity.map((building) => (
                 <li
                   key={building.buildingLabel}
                   className="flex items-center justify-between gap-3 px-5 py-3"
@@ -298,7 +296,7 @@ export default async function AdminHomePage() {
                   </span>
                 </li>
               ))}
-              {topBuildings.length === 0 ? (
+              {buildingActivity.length === 0 ? (
                 <li className="px-5 py-6 text-sm text-neutral-500">
                   Sem dados de blocos ainda.
                 </li>
