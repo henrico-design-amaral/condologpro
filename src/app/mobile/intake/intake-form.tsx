@@ -1,8 +1,9 @@
 "use client";
 
-import { Camera, CheckCircle2, FileImage, Loader2, RotateCcw, Search, Send, Upload } from "lucide-react";
-import Link from "next/link";
+import { Camera, CheckCircle2, FileImage, RotateCcw, Search, Send, Upload } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { LabelConfidence, LabelRecognitionResult, LabelSuggestion } from "@/lib/label-recognition";
 
 type ResidentResult = {
   id: string;
@@ -12,12 +13,6 @@ type ResidentResult = {
   isPrimary: boolean;
   buildingLabel: string;
   unitNumber: string;
-};
-
-type OcrSuggestion = {
-  label: string;
-  value: string;
-  confidence: "Alta" | "Média" | "Baixa";
 };
 
 type CreatedPackage = {
@@ -48,47 +43,6 @@ type CameraDiagnostic = {
   errorMessage?: string;
 };
 
-const carrierHints = ["Correios", "Mercado Livre", "Shopee", "Amazon", "Jadlog", "Loggi"];
-
-function confidenceFor(text: string): OcrSuggestion["confidence"] {
-  if (text.length > 12) {
-    return "Alta";
-  }
-
-  if (text.length > 5) {
-    return "Média";
-  }
-
-  return "Baixa";
-}
-
-function extractOcrSuggestions(text: string): OcrSuggestion[] {
-  const normalized = text.replace(/\s+/g, " ").trim();
-  const suggestions: OcrSuggestion[] = [];
-  const tracking = normalized.match(/\b[A-Z]{2}\d{9}[A-Z]{2}\b|\b[A-Z0-9]{10,18}\b/i)?.[0];
-  const unit = normalized.match(/\b(?:apto|apartamento|ap|unidade)\s*[:.-]?\s*(\d{2,4})\b/i)?.[1];
-  const carrier = carrierHints.find((hint) => normalized.toLowerCase().includes(hint.toLowerCase()));
-  const recipient = normalized.match(/\b(?:destinat[aá]rio|recebedor|nome)\s*[:.-]\s*([A-Za-zÀ-ÿ ]{4,40})/i)?.[1]?.trim();
-
-  if (tracking) {
-    suggestions.push({ label: "Código", value: tracking.toUpperCase(), confidence: confidenceFor(tracking) });
-  }
-
-  if (carrier) {
-    suggestions.push({ label: "Transportadora", value: carrier, confidence: "Média" });
-  }
-
-  if (unit) {
-    suggestions.push({ label: "Apto provável", value: unit, confidence: "Baixa" });
-  }
-
-  if (recipient) {
-    suggestions.push({ label: "Nome possível", value: recipient, confidence: "Baixa" });
-  }
-
-  return suggestions;
-}
-
 function cameraErrorMessage(error: unknown) {
   if (error instanceof DOMException) {
     if (error.name === "NotAllowedError" || error.name === "SecurityError") {
@@ -105,6 +59,58 @@ function cameraErrorMessage(error: unknown) {
   }
 
   return "Não foi possível abrir a câmera direta. Use Anexar para continuar o cadastro.";
+}
+
+function confidenceLabel(confidence: LabelConfidence) {
+  const labels: Record<LabelConfidence, string> = {
+    high: "Alta",
+    medium: "Média",
+    low: "Baixa"
+  };
+
+  return labels[confidence];
+}
+
+function appendNote(current: string, label: string, value: string) {
+  const entry = `${label}: ${value}`;
+
+  if (current.includes(entry)) {
+    return current;
+  }
+
+  return current.trim() ? `${current.trim()}\n${entry}` : entry;
+}
+
+function formatPhoneLocal(phone: string | null) {
+  if (!phone) {
+    return "Não informado";
+  }
+
+  const digits = phone.replace(/\D/g, "");
+
+  if (digits.length === 11) {
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+  }
+
+  if (digits.length === 10) {
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+  }
+
+  return phone;
+}
+
+function residentSearchTerm(recognition: LabelRecognitionResult | null) {
+  if (!recognition) {
+    return "";
+  }
+
+  const { recipientName, building, apartment } = recognition.fields;
+
+  if (building && apartment) {
+    return `${building} ${apartment}`;
+  }
+
+  return recipientName ?? apartment ?? building ?? "";
 }
 
 export function IntakeForm() {
@@ -125,7 +131,9 @@ export function IntakeForm() {
   const [notes, setNotes] = useState("");
   const [ocrStatus, setOcrStatus] = useState<"idle" | "running" | "done" | "error">("idle");
   const [ocrError, setOcrError] = useState<string | null>(null);
-  const [ocrSuggestions, setOcrSuggestions] = useState<OcrSuggestion[]>([]);
+  const [recognition, setRecognition] = useState<LabelRecognitionResult | null>(null);
+  const [residentMatches, setResidentMatches] = useState<ResidentResult[]>([]);
+  const [isMatchingResident, setIsMatchingResident] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [created, setCreated] = useState<CreatePackageResponse | null>(null);
@@ -186,6 +194,70 @@ export function IntakeForm() {
     return `${selectedResident.name} · ${selectedResident.buildingLabel} · Apto ${selectedResident.unitNumber}`;
   }, [selectedResident]);
 
+  const primaryResidentMatch = useMemo(() => {
+    if (!recognition) {
+      return null;
+    }
+
+    const building = recognition.fields.building?.toLowerCase();
+    const apartment = recognition.fields.apartment?.toLowerCase();
+    const recipient = recognition.fields.recipientName?.toLowerCase();
+
+    return (
+      residentMatches.find((resident) => {
+        const sameUnit =
+          (!building || resident.buildingLabel.toLowerCase() === building) &&
+          (!apartment || resident.unitNumber.toLowerCase() === apartment);
+        const sameName = !recipient || resident.name.toLowerCase().includes(recipient) || recipient.includes(resident.name.toLowerCase());
+        return sameUnit && sameName;
+      }) ??
+      residentMatches.find((resident) => {
+        return (
+          (!building || resident.buildingLabel.toLowerCase() === building) &&
+          (!apartment || resident.unitNumber.toLowerCase() === apartment)
+        );
+      }) ??
+      null
+    );
+  }, [recognition, residentMatches]);
+
+  useEffect(() => {
+    const term = residentSearchTerm(recognition);
+
+    if (term.trim().length < 2) {
+      setResidentMatches([]);
+      return;
+    }
+
+    const controller = new AbortController();
+
+    async function matchResident() {
+      setIsMatchingResident(true);
+
+      try {
+        const response = await fetch(`/api/residents/search?q=${encodeURIComponent(term)}`, {
+          signal: controller.signal
+        });
+        const data = (await response.json()) as { residents: ResidentResult[] };
+        setResidentMatches(data.residents);
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          setResidentMatches([]);
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setIsMatchingResident(false);
+        }
+      }
+    }
+
+    void matchResident();
+
+    return () => {
+      controller.abort();
+    };
+  }, [recognition]);
+
   function setPhoto(file: File) {
     if (previewUrl) {
       URL.revokeObjectURL(previewUrl);
@@ -197,7 +269,8 @@ export function IntakeForm() {
     setCameraError(null);
     setCameraDiagnostic(null);
     setOcrStatus("idle");
-    setOcrSuggestions([]);
+    setRecognition(null);
+    setResidentMatches([]);
     setOcrError(null);
   }
 
@@ -209,7 +282,8 @@ export function IntakeForm() {
     setLabelFile(null);
     setPreviewUrl(null);
     setOcrStatus("idle");
-    setOcrSuggestions([]);
+    setRecognition(null);
+    setResidentMatches([]);
     setOcrError(null);
   }
 
@@ -390,30 +464,44 @@ export function IntakeForm() {
 
     setOcrStatus("running");
     setOcrError(null);
+    setRecognition(null);
+    setResidentMatches([]);
 
     try {
-      const { createWorker } = await import("tesseract.js");
-      const worker = await createWorker("por");
-      const result = await worker.recognize(labelFile);
-      await worker.terminate();
-      const suggestions = extractOcrSuggestions(result.data.text);
-      setOcrSuggestions(suggestions);
+      const { recognizeLabelImage } = await import("@/lib/label-recognition");
+      const result = await recognizeLabelImage(labelFile);
+      setRecognition(result);
       setOcrStatus("done");
-
-      const code = suggestions.find((suggestion) => suggestion.label === "Código")?.value;
-      const carrierSuggestion = suggestions.find((suggestion) => suggestion.label === "Transportadora")?.value;
-
-      if (code && !packageCode) {
-        setPackageCode(code);
-      }
-
-      if (carrierSuggestion && !carrier) {
-        setCarrier(carrierSuggestion);
-      }
     } catch (error) {
       setOcrStatus("error");
       setOcrError("OCR indisponível ou inconclusivo. Continue preenchendo manualmente.");
     }
+  }
+
+  function applySuggestion(suggestion: LabelSuggestion) {
+    if (suggestion.key === "packageCode") {
+      setPackageCode(suggestion.value);
+      return;
+    }
+
+    if (suggestion.key === "routeCode") {
+      setCarrier(suggestion.value);
+      return;
+    }
+
+    if (suggestion.key === "residentQuery") {
+      setSelectedResident(null);
+      setSearchTerm(residentSearchTerm(recognition) || suggestion.value);
+      return;
+    }
+
+    if (suggestion.key === "building" || suggestion.key === "apartment") {
+      setSelectedResident(null);
+      setSearchTerm(residentSearchTerm(recognition) || suggestion.value);
+      return;
+    }
+
+    setNotes((current) => appendNote(current, suggestion.label, suggestion.value));
   }
 
   async function uploadLabelPhoto() {
@@ -489,9 +577,12 @@ export function IntakeForm() {
   if (created) {
     return (
       <section className="mx-auto flex max-w-md flex-col gap-5 px-4 py-6 text-white">
-        <Link href="/mobile" className="min-h-11 text-sm font-medium text-neutral-300 focus:outline-none focus:ring-2 focus:ring-white">
+        <a
+          href="/mobile"
+          className="inline-flex px-2 py-1 text-sm font-medium text-neutral-300 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+        >
           Voltar para portaria
-        </Link>
+        </a>
         <div className="rounded-[8px] border border-emerald-500/40 bg-emerald-500/10 p-5">
           <CheckCircle2 className="h-8 w-8 text-emerald-300" aria-hidden="true" />
           <h1 className="mt-4 text-2xl font-semibold">Encomenda registrada</h1>
@@ -506,9 +597,9 @@ export function IntakeForm() {
             onClick={markNotified}
             target="_blank"
             rel="noreferrer"
-            className="flex min-h-16 items-center justify-center gap-3 rounded-[8px] bg-white px-5 py-4 text-lg font-semibold text-neutral-950 focus:outline-none focus:ring-2 focus:ring-emerald-300"
+            className="inline-flex min-h-16 items-center justify-center rounded-xl bg-neutral-950 px-4 py-3 text-lg font-medium text-white transition"
           >
-            <Send className="h-5 w-5" aria-hidden="true" />
+            <Send className="mr-2 h-5 w-5" aria-hidden="true" />
             Enviar WhatsApp
           </a>
         ) : (
@@ -517,28 +608,32 @@ export function IntakeForm() {
           </div>
         )}
 
-        <button
+        <Button
           type="button"
           onClick={() => window.location.reload()}
-          className="min-h-14 rounded-[8px] border border-neutral-600 px-5 py-4 text-base font-semibold focus:outline-none focus:ring-2 focus:ring-white"
+          variant="secondary"
+          className="w-full text-base font-semibold"
         >
           Nova encomenda
-        </button>
-        <Link
+        </Button>
+        <a
           href="/mobile/pending"
-          className="min-h-14 rounded-[8px] border border-neutral-600 px-5 py-4 text-center text-base font-semibold focus:outline-none focus:ring-2 focus:ring-white"
+          className="inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-neutral-300 bg-white px-4 py-3 text-base font-semibold text-neutral-950 transition"
         >
           Ver pendentes
-        </Link>
+        </a>
       </section>
     );
   }
 
   return (
     <section className="mx-auto flex max-w-md flex-col gap-5 px-4 py-6 text-white">
-      <Link href="/mobile" className="min-h-11 text-sm font-medium text-neutral-300 focus:outline-none focus:ring-2 focus:ring-white">
+      <a
+        href="/mobile"
+        className="inline-flex px-2 py-1 text-sm font-medium text-neutral-300 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+      >
         Voltar
-      </Link>
+      </a>
 
       <div>
         <p className="text-sm font-semibold uppercase tracking-wide text-emerald-300">Portaria</p>
@@ -600,17 +695,18 @@ export function IntakeForm() {
         ) : null}
 
         <div className="mt-4 grid grid-cols-2 gap-3">
-          <button
+          <Button
             type="button"
             onClick={startCamera}
             disabled={cameraState === "starting"}
-            className="flex min-h-14 items-center justify-center gap-2 rounded-[8px] bg-white px-4 py-3 font-semibold text-neutral-950 focus:outline-none focus:ring-2 focus:ring-emerald-300 disabled:opacity-70"
+            variant="primary"
+            className="flex min-h-14 w-full"
           >
-            {cameraState === "starting" ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" /> : <Camera className="h-5 w-5" aria-hidden="true" />}
-            Câmera
-          </button>
+            {cameraState !== "starting" && <Camera className="mr-2 h-5 w-5" aria-hidden="true" />}
+            {cameraState === "starting" ? "Abrindo..." : "Câmera"}
+          </Button>
 
-          <label className="flex min-h-14 cursor-pointer items-center justify-center gap-2 rounded-[8px] border border-neutral-600 px-4 py-3 font-semibold focus-within:outline-none focus-within:ring-2 focus-within:ring-white">
+          <label className="flex min-h-14 cursor-pointer items-center justify-center gap-2 rounded-[8px] border border-neutral-700 bg-neutral-900 text-neutral-100 hover:bg-neutral-800 hover:text-white active:bg-neutral-950 px-4 py-3 font-semibold focus-within:outline-none focus-within:ring-2 focus-within:ring-emerald-300">
             <Upload className="h-5 w-5" aria-hidden="true" />
             Anexar
             <input
@@ -631,34 +727,37 @@ export function IntakeForm() {
 
         {cameraState === "ready" ? (
           <div className="mt-3 grid grid-cols-2 gap-3">
-            <button
+            <Button
               type="button"
               onClick={captureFrame}
               disabled={!videoReady}
-              className="flex min-h-14 items-center justify-center gap-2 rounded-[8px] bg-emerald-400 px-4 py-3 font-semibold text-neutral-950 focus:outline-none focus:ring-2 focus:ring-white"
+              variant="primary"
+              className="flex min-h-14 w-full"
             >
-              <FileImage className="h-5 w-5" aria-hidden="true" />
+              <FileImage className="mr-2 h-5 w-5" aria-hidden="true" />
               Capturar
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
               onClick={startCamera}
-              className="flex min-h-14 items-center justify-center gap-2 rounded-[8px] border border-neutral-600 px-4 py-3 font-semibold focus:outline-none focus:ring-2 focus:ring-white"
+              variant="secondary"
+              className="flex min-h-14 w-full"
             >
-              <RotateCcw className="h-5 w-5" aria-hidden="true" />
+              <RotateCcw className="mr-2 h-5 w-5" aria-hidden="true" />
               Retomar
-            </button>
+            </Button>
           </div>
         ) : null}
         {previewUrl ? (
-          <button
+          <Button
             type="button"
             onClick={retakePhoto}
-            className="mt-3 flex min-h-12 w-full items-center justify-center gap-2 rounded-[8px] border border-neutral-600 px-4 py-3 text-sm font-semibold text-neutral-100 focus:outline-none focus:ring-2 focus:ring-white"
+            variant="secondary"
+            className="mt-3 w-full"
           >
-            <RotateCcw className="h-5 w-5" aria-hidden="true" />
+            <RotateCcw className="mr-2 h-5 w-5" aria-hidden="true" />
             Refazer foto
-          </button>
+          </Button>
         ) : null}
       </div>
 
@@ -668,46 +767,87 @@ export function IntakeForm() {
             <h2 className="text-lg font-semibold">Reconhecimento</h2>
             <p className="text-sm text-neutral-400">Sugestões editáveis, sem bloquear cadastro.</p>
           </div>
-          <button
+          <Button
             type="button"
             onClick={runOcr}
-            disabled={!labelFile || ocrStatus === "running"}
-            className="min-h-11 rounded-[8px] border border-neutral-600 px-3 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-white disabled:opacity-50"
+            disabled={!labelFile}
+            variant="secondary"
+            className="text-xs px-3 py-2 h-11"
           >
-            {ocrStatus === "running" ? "Lendo" : "Ler etiqueta"}
-          </button>
+            {ocrStatus === "running" ? "Lendo..." : "Ler etiqueta"}
+          </Button>
         </div>
+        {ocrStatus === "running" ? <p className="mt-3 text-sm text-neutral-300">Processando rotações da etiqueta...</p> : null}
         {ocrError ? <p className="mt-3 text-sm text-amber-200">{ocrError}</p> : null}
-        {ocrSuggestions.length > 0 ? (
-          <div className="mt-3 grid gap-2">
-            {ocrSuggestions.map((suggestion) => (
+        {recognition ? (
+          <div className="mt-3 grid gap-3">
+            <div className="rounded-[8px] border border-neutral-700 bg-neutral-950 p-3 text-xs text-neutral-300">
+              <p>
+                Melhor rotação detectada: {recognition.bestRotation}° · Confiança: {confidenceLabel(recognition.confidence)}
+              </p>
+              <p className="mt-1">
+                Padrões: {recognition.matchedPatterns.length > 0 ? recognition.matchedPatterns.join(", ") : "nenhum padrão forte"}
+              </p>
+            </div>
+
+            {isMatchingResident ? <p className="text-sm text-neutral-400">Buscando morador provável...</p> : null}
+            {!isMatchingResident && primaryResidentMatch ? (
               <button
-                key={`${suggestion.label}-${suggestion.value}`}
                 type="button"
                 onClick={() => {
-                  if (suggestion.label === "Código") {
-                    setPackageCode(suggestion.value);
-                  }
-                  if (suggestion.label === "Transportadora") {
-                    setCarrier(suggestion.value);
-                  }
-                  if (suggestion.label === "Apto provável") {
-                    setSearchTerm(suggestion.value);
-                    setSelectedResident(null);
-                  }
+                  setSelectedResident(primaryResidentMatch);
+                  setSearchTerm("");
+                  setResults([]);
                 }}
-                className="flex min-h-12 items-center justify-between rounded-[8px] border border-neutral-700 px-3 py-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-white"
+                className="min-h-16 rounded-[8px] border border-emerald-400/50 bg-emerald-400/10 p-3 text-left text-sm transition hover:bg-emerald-400/15 focus:outline-none focus:ring-2 focus:ring-emerald-300"
               >
-                <span>
-                  <span className="text-neutral-400">{suggestion.label}: </span>
-                  {suggestion.value}
+                <span className="block text-xs font-semibold uppercase tracking-wide text-emerald-300">Morador provável</span>
+                <span className="mt-1 block font-semibold text-white">{primaryResidentMatch.name}</span>
+                <span className="mt-1 block text-neutral-300">
+                  Bloco {primaryResidentMatch.buildingLabel} · Apto {primaryResidentMatch.unitNumber}
                 </span>
-                <span className="rounded-full bg-neutral-800 px-2 py-1 text-xs text-neutral-300">{suggestion.confidence}</span>
               </button>
-            ))}
+            ) : null}
+            {!isMatchingResident && recognition.suggestions.length > 0 && !primaryResidentMatch ? (
+              <p className="text-sm text-amber-100">Sem morador encontrado, revise manualmente.</p>
+            ) : null}
+
+            {recognition.suggestions.length > 0 ? (
+              <div className="grid gap-2">
+                {recognition.suggestions.map((suggestion) => (
+                  <div
+                    key={`${suggestion.key}-${suggestion.value}`}
+                    className="rounded-[8px] border border-neutral-700 bg-neutral-950 p-3 text-sm"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-neutral-400">{suggestion.label}</p>
+                        <p className="mt-1 break-words text-base font-semibold text-white">{suggestion.value}</p>
+                        <p className="mt-1 text-xs text-neutral-500">{suggestion.reason}</p>
+                      </div>
+                      <span className="shrink-0 rounded-full bg-neutral-800 px-2 py-1 text-xs text-neutral-300">
+                        {confidenceLabel(suggestion.confidence)}
+                      </span>
+                    </div>
+                    <Button
+                      type="button"
+                      onClick={() => applySuggestion(suggestion)}
+                      variant="secondary"
+                      className="mt-3 w-full"
+                    >
+                      Aplicar
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-neutral-500">Nenhuma sugestão útil. Continue manualmente.</p>
+            )}
           </div>
+        ) : ocrStatus === "done" ? (
+          <p className="mt-3 text-sm text-neutral-500">Nenhuma sugestão útil. Continue manualmente.</p>
         ) : (
-          <p className="mt-3 text-sm text-neutral-500">Sem sugestões aplicadas.</p>
+          <p className="mt-3 text-sm text-neutral-500">Capture a etiqueta e toque em Ler etiqueta.</p>
         )}
       </div>
 
@@ -743,15 +883,15 @@ export function IntakeForm() {
                   setSearchTerm("");
                   setResults([]);
                 }}
-                className="min-h-20 rounded-[8px] border border-neutral-700 bg-neutral-950 p-3 text-left focus:outline-none focus:ring-2 focus:ring-emerald-300"
+                className="min-h-20 w-full rounded-[8px] border border-neutral-700 bg-neutral-950 p-3 text-left transition hover:bg-neutral-900 hover:border-neutral-600 active:bg-neutral-800 focus:outline-none focus:ring-2 focus:ring-emerald-300"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="font-semibold">Morador: {resident.name}</p>
+                    <p className="font-semibold text-white">Morador: {resident.name}</p>
                     <p className="mt-1 text-sm text-neutral-300">
                       Bloco: {resident.buildingLabel} · Apto: {resident.unitNumber}
                     </p>
-                    <p className="mt-1 text-sm text-neutral-400">Telefone: {resident.phone ?? "Não informado"}</p>
+                    <p className="mt-1 text-sm text-neutral-400">Telefone: {formatPhoneLocal(resident.phone)}</p>
                   </div>
                   {resident.isPrimary ? (
                     <span className="rounded-full bg-emerald-400 px-2 py-1 text-xs font-semibold text-neutral-950">Principal</span>
@@ -797,15 +937,16 @@ export function IntakeForm() {
         <p className="rounded-[8px] border border-red-400/40 bg-red-400/10 p-3 text-sm text-red-50">{formError}</p>
       ) : null}
 
-      <button
+      <Button
         type="button"
         onClick={submitPackage}
         disabled={!canSubmit}
-        className="flex min-h-16 items-center justify-center gap-3 rounded-[8px] bg-white px-5 py-4 text-lg font-semibold text-neutral-950 focus:outline-none focus:ring-2 focus:ring-emerald-300 disabled:cursor-not-allowed disabled:opacity-50"
+        variant="primary"
+        className="flex min-h-16 w-full text-lg"
       >
-        {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" /> : <CheckCircle2 className="h-5 w-5" aria-hidden="true" />}
-        Registrar encomenda
-      </button>
+        {!isSubmitting && <CheckCircle2 className="mr-2 h-5 w-5" aria-hidden="true" />}
+        {isSubmitting ? "Registrando..." : "Registrar encomenda"}
+      </Button>
     </section>
   );
 }
