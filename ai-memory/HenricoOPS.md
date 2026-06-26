@@ -26,6 +26,7 @@ Memória operacional contínua do trabalho com Henrico. Fatos verificados, sem s
 - CI remoto inicial: `PostgreSQL migrations`, Vercel e Vercel Preview Comments passaram; `Typecheck, validate, build` falhou em `npm run prisma:supabase:validate`.
 - Causa verificada: o job principal do GitHub Actions definia `DATABASE_URL=file:./dev.db`, mas não definia `DIRECT_URL`, exigido por `prisma/schema.supabase.prisma`.
 - Decisão técnica: usar `DIRECT_URL` placeholder local sem segredo real no job principal apenas para validação sintática do schema PostgreSQL; não usar Supabase remoto real.
+- Correção publicada no commit `4ce8ee7` (`fix(ci): provide direct url for supabase validation`); CI remoto do PR passou após a correção.
 
 ## Pontos de atenção e limites de escopo
 - **Credenciais de Produção**: Não há credenciais Supabase reais configuradas no ambiente local.
