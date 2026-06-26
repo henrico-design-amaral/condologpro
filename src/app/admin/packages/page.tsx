@@ -5,6 +5,8 @@ import { StatusBadge } from "@/components/status-badge";
 import { prisma } from "@/lib/prisma";
 import { formatDateTime, formatRelativeHours } from "@/lib/format";
 import { isPackageOverdue, overdueThresholdDate } from "@/lib/stats";
+import { ADMIN_ROLES } from "@/lib/auth/policy";
+import { requirePageOperator } from "@/lib/auth/server";
 
 export const dynamic = "force-dynamic";
 
@@ -63,6 +65,7 @@ function packagePageHref(params: {
 }
 
 export default async function AdminPackagesPage({ searchParams }: AdminPackagesPageProps) {
+  const operator = await requirePageOperator(ADMIN_ROLES, "/admin/packages");
   const params = await searchParams;
   const status = params.status;
   const q = params.q?.trim();
@@ -71,6 +74,7 @@ export default async function AdminPackagesPage({ searchParams }: AdminPackagesP
   const page = parsePage(params.page);
 
   const where: Prisma.PackageWhereInput = {
+    organizationId: operator.organizationId,
     ...(parsedStatus ? { status: parsedStatus } : {}),
     ...(isOverdueFilter
       ? {

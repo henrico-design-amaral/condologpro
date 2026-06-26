@@ -142,17 +142,20 @@ async function main() {
       {
         organizationId: organization.id,
         name: "Administração",
-        role: "ADMIN"
+        role: "ADMIN",
+        authSubject: process.env.SEED_ADMIN_AUTH_SUBJECT?.trim() || null
       },
       {
         organizationId: organization.id,
         name: "Portaria Principal",
-        role: "FRONT_DESK"
+        role: "FRONT_DESK",
+        authSubject: process.env.SEED_FRONT_DESK_AUTH_SUBJECT?.trim() || null
       },
       {
         organizationId: organization.id,
         name: "Síndico Demo",
-        role: "MANAGER"
+        role: "MANAGER",
+        authSubject: process.env.SEED_MANAGER_AUTH_SUBJECT?.trim() || null
       }
     ]
   });

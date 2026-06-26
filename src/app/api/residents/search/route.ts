@@ -1,8 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
+import { authorizeApi } from "@/lib/auth/server";
+import { OPERATIONAL_ROLES } from "@/lib/auth/policy";
 
 export async function GET(request: NextRequest) {
+  const authentication = await authorizeApi(OPERATIONAL_ROLES);
+
+  if (!authentication.ok) {
+    return authentication.response;
+  }
+
   const query = request.nextUrl.searchParams.get("q")?.trim() ?? "";
 
   if (query.length < 2) {
@@ -13,6 +21,7 @@ export async function GET(request: NextRequest) {
 
   const residents = await prisma.resident.findMany({
     where: {
+      organizationId: authentication.operator.organizationId,
       isActive: true,
       OR: [
         { name: { contains: query } },

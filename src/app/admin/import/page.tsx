@@ -1,8 +1,13 @@
 ﻿import Link from "next/link";
 
 import { ImportForm } from "./import-form";
+import { ADMIN_ROLES } from "@/lib/auth/policy";
+import { requirePageOperator } from "@/lib/auth/server";
 
-export default function AdminImportPage() {
+export const dynamic = "force-dynamic";
+
+export default async function AdminImportPage() {
+  await requirePageOperator(ADMIN_ROLES, "/admin/import");
   return (
     <main className="min-h-screen bg-neutral-100 px-6 py-8 text-neutral-950">
       <section className="mx-auto max-w-7xl">

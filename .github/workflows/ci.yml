@@ -6,11 +6,13 @@ on:
       - main
       - "mvp/**"
       - "fix/**"
+      - "feature/**"
   pull_request:
     branches:
       - main
       - "mvp/**"
       - "fix/**"
+      - "feature/**"
 
 jobs:
   build:
@@ -35,6 +37,15 @@ jobs:
       - name: Validate Prisma schema (SQLite)
         run: npm run prisma:validate
 
+      - name: Validate Prisma schema (PostgreSQL)
+        run: npm run prisma:supabase:validate
+
+      - name: Run auth and cloud policy tests
+        run: npm run test:auth-cloud
+
+      - name: Run cloud foundation gates
+        run: npm run validate:cloud-foundation
+
       - name: Generate Prisma client (SQLite)
         run: npm run prisma:generate
 
@@ -52,3 +63,59 @@ jobs:
 
       - name: Build
         run: npm run build
+
+  migrations:
+    name: PostgreSQL migrations
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: condologpro
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/condologpro"
+      DIRECT_URL: "postgresql://postgres:postgres@localhost:5432/condologpro"
+      PGPASSWORD: postgres
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Prepare Supabase-compatible roles and Storage schema
+        run: |
+          psql -h localhost -U postgres -d condologpro -v ON_ERROR_STOP=1 <<'SQL'
+          CREATE ROLE anon NOLOGIN;
+          CREATE ROLE authenticated NOLOGIN;
+          CREATE SCHEMA storage;
+          CREATE TABLE storage.buckets (
+            id text PRIMARY KEY,
+            name text NOT NULL,
+            public boolean NOT NULL DEFAULT false,
+            file_size_limit bigint,
+            allowed_mime_types text[]
+          );
+          SQL
+
+      - name: Deploy PostgreSQL migrations
+        run: npm run prisma:supabase:migrate:deploy
+
+      - name: Check PostgreSQL migration status
+        run: npm run prisma:supabase:migrate:status

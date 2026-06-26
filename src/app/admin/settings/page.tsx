@@ -3,23 +3,25 @@ import { revalidatePath } from "next/cache";
 import { Building2, MapPin, MessageCircle, Phone } from "lucide-react";
 
 import { prisma } from "@/lib/prisma";
+import { ADMIN_ROLES } from "@/lib/auth/policy";
+import { requirePageOperator } from "@/lib/auth/server";
 
 export const dynamic = "force-dynamic";
 
 async function updateOrganization(formData: FormData) {
   "use server";
 
-  const id = String(formData.get("organizationId") ?? "");
+  const operator = await requirePageOperator(ADMIN_ROLES, "/admin/settings");
   const name = String(formData.get("name") ?? "").trim();
   const address = String(formData.get("address") ?? "").trim();
   const whatsappPhone = String(formData.get("whatsappPhone") ?? "").trim();
 
-  if (!id || !name) {
+  if (!name) {
     return;
   }
 
   await prisma.organization.update({
-    where: { id },
+    where: { id: operator.organizationId },
     data: {
       name,
       address: address || null,
@@ -32,15 +34,17 @@ async function updateOrganization(formData: FormData) {
 }
 
 export default async function AdminSettingsPage() {
+  const operator = await requirePageOperator(ADMIN_ROLES, "/admin/settings");
   const [organization, totals] = await Promise.all([
     prisma.organization.findFirst({
+      where: { id: operator.organizationId },
       orderBy: { createdAt: "asc" }
     }),
     Promise.all([
-      prisma.building.count(),
-      prisma.unit.count(),
-      prisma.resident.count(),
-      prisma.package.count()
+      prisma.building.count({ where: { organizationId: operator.organizationId } }),
+      prisma.unit.count({ where: { organizationId: operator.organizationId } }),
+      prisma.resident.count({ where: { organizationId: operator.organizationId } }),
+      prisma.package.count({ where: { organizationId: operator.organizationId } })
     ])
   ]);
 

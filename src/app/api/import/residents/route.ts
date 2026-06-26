@@ -3,6 +3,8 @@ import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
 import { parseCsv } from "@/lib/import-csv";
+import { authorizeApi } from "@/lib/auth/server";
+import { ADMIN_ROLES } from "@/lib/auth/policy";
 
 const importSchema = z.object({
   csv: z.string().min(1, "Cole o CSV ou anexe um arquivo."),
@@ -19,6 +21,12 @@ type ImportResult = {
 };
 
 export async function POST(request: Request) {
+  const authentication = await authorizeApi(ADMIN_ROLES);
+
+  if (!authentication.ok) {
+    return authentication.response;
+  }
+
   try {
     const body = importSchema.parse(await request.json());
     const preview = parseCsv(body.csv);
@@ -46,6 +54,7 @@ export async function POST(request: Request) {
     }
 
     const organization = await prisma.organization.findFirst({
+      where: { id: authentication.operator.organizationId },
       orderBy: { createdAt: "asc" }
     });
 
@@ -82,7 +91,11 @@ export async function POST(request: Request) {
       }
 
       const existingUnit = await prisma.unit.findFirst({
-        where: { buildingId: building.id, number: row.unit }
+        where: {
+          organizationId: organization.id,
+          buildingId: building.id,
+          number: row.unit
+        }
       });
 
       const unit =
@@ -102,6 +115,7 @@ export async function POST(request: Request) {
 
       const existingResident = await prisma.resident.findFirst({
         where: {
+          organizationId: organization.id,
           unitId: unit.id,
           name: row.name
         }

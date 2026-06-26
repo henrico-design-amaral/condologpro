@@ -2,6 +2,8 @@ import Link from "next/link";
 import { Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
+import { ADMIN_ROLES } from "@/lib/auth/policy";
+import { requirePageOperator } from "@/lib/auth/server";
 
 export const dynamic = "force-dynamic";
 
@@ -44,12 +46,14 @@ function residentsPageHref(params: {
 }
 
 export default async function AdminResidentsPage({ searchParams }: AdminResidentsPageProps) {
+  const operator = await requirePageOperator(ADMIN_ROLES, "/admin/residents");
   const params = await searchParams;
   const q = params.q?.trim();
   const buildingFilter = params.building?.trim();
   const page = parsePage(params.page);
 
   const where: Prisma.ResidentWhereInput = {
+    organizationId: operator.organizationId,
     isActive: true,
     ...(buildingFilter
       ? {
@@ -97,6 +101,7 @@ export default async function AdminResidentsPage({ searchParams }: AdminResident
       take: PAGE_SIZE + 1
     }),
     prisma.building.findMany({
+      where: { organizationId: operator.organizationId },
       orderBy: { label: "asc" },
       select: { label: true }
     })

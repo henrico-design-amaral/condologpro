@@ -4,6 +4,8 @@ import { PackageStatus, Prisma } from "@prisma/client";
 import { StatusBadge } from "@/components/status-badge";
 import { prisma } from "@/lib/prisma";
 import { formatDateTime } from "@/lib/format";
+import { ADMIN_ROLES } from "@/lib/auth/policy";
+import { requirePageOperator } from "@/lib/auth/server";
 
 export const dynamic = "force-dynamic";
 
@@ -56,6 +58,7 @@ const EVENT_LABEL: Record<string, string> = {
 };
 
 export default async function AdminHistoryPage({ searchParams }: AdminHistoryPageProps) {
+  const operator = await requirePageOperator(ADMIN_ROLES, "/admin/history");
   const params = await searchParams;
   const q = params.q?.trim();
   const statusFilter = parsePackageStatus(params.status);
@@ -64,6 +67,7 @@ export default async function AdminHistoryPage({ searchParams }: AdminHistoryPag
   const buildingFilter = params.building?.trim();
 
   const where: Prisma.PackageWhereInput = {
+    organizationId: operator.organizationId,
     ...(statusFilter ? { status: statusFilter } : {}),
     ...(fromDate || toDate
       ? {
@@ -114,6 +118,7 @@ export default async function AdminHistoryPage({ searchParams }: AdminHistoryPag
   });
 
   const buildings = await prisma.building.findMany({
+    where: { organizationId: operator.organizationId },
     orderBy: { label: "asc" },
     select: { label: true }
   });

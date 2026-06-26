@@ -6,6 +6,8 @@ import { StatusBadge } from "@/components/status-badge";
 import { prisma } from "@/lib/prisma";
 import { formatDateTime, formatRelativeHours } from "@/lib/format";
 import { isPackageOverdue, overdueThresholdDate } from "@/lib/stats";
+import { OPERATIONAL_ROLES } from "@/lib/auth/policy";
+import { requirePageOperator } from "@/lib/auth/server";
 
 export const dynamic = "force-dynamic";
 
@@ -55,6 +57,7 @@ function pendingPageHref(params: {
 }
 
 export default async function MobilePendingPage({ searchParams }: MobilePendingPageProps) {
+  const operator = await requirePageOperator(OPERATIONAL_ROLES, "/mobile/pending");
   const params = await searchParams;
   const q = params.q?.trim();
   const status = params.status;
@@ -68,6 +71,7 @@ export default async function MobilePendingPage({ searchParams }: MobilePendingP
 
   const packages = await prisma.package.findMany({
     where: {
+      organizationId: operator.organizationId,
       ...statusFilter,
       ...(onlyOverdue ? { receivedAt: { lt: overdueThresholdDate() } } : {}),
       ...(q

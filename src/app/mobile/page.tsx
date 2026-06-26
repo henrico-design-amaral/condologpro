@@ -2,12 +2,15 @@ import { Camera, ClipboardList, PackageCheck, ScrollText, ShieldCheck } from "lu
 import Link from "next/link";
 
 import { getMobileSummaryStats } from "@/lib/stats";
+import { OPERATIONAL_ROLES } from "@/lib/auth/policy";
+import { requirePageOperator } from "@/lib/auth/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function MobileHomePage() {
+  const operator = await requirePageOperator(OPERATIONAL_ROLES, "/mobile");
   const { pendingCount, notifiedCount, todayCount, pickedUpTodayCount, overdueCount } =
-    await getMobileSummaryStats();
+    await getMobileSummaryStats(operator.organizationId);
 
   const totalPending = pendingCount + notifiedCount;
 

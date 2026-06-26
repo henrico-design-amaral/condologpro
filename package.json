@@ -21,17 +21,23 @@
         "db:reset": "prisma db push --force-reset && tsx prisma/seed.ts",
         "prisma:supabase:validate": "prisma validate --schema prisma/schema.supabase.prisma",
         "prisma:supabase:generate": "prisma generate --schema prisma/schema.supabase.prisma",
-        "prisma:supabase:push": "prisma db push --schema prisma/schema.supabase.prisma",
+        "prisma:supabase:push": "node scripts/block-cloud-db-push.mjs",
+        "prisma:supabase:migrate:status": "prisma migrate status --schema prisma/schema.supabase.prisma",
+        "prisma:supabase:migrate:deploy": "prisma migrate deploy --schema prisma/schema.supabase.prisma",
+        "test:auth-cloud": "tsx scripts/test-auth-cloud.ts",
+        "validate:cloud-foundation": "node scripts/validate-cloud-foundation.mjs",
         "prisma:supabase:seed": "tsx prisma/seed.ts",
         "prisma:supabase:studio": "prisma studio --schema prisma/schema.supabase.prisma"
     },
     "dependencies": {
         "@hookform/resolvers": "^5.4.0",
         "@prisma/client": "^6.19.3",
+        "@supabase/ssr": "^0.12.0",
+        "@supabase/supabase-js": "^2.108.2",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
         "lucide-react": "^1.17.0",
-        "next": "^16.2.6",
+        "next": "^16.2.9",
         "react": "^19.2.6",
         "react-dom": "^19.2.6",
         "react-hook-form": "^7.76.1",
@@ -51,5 +57,9 @@
     },
     "prisma": {
         "seed": "tsx prisma/seed.ts"
+    },
+    "overrides": {
+        "esbuild": "0.28.1",
+        "postcss": "8.5.15"
     }
 }

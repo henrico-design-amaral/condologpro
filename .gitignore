@@ -24,6 +24,7 @@ dist/
 # uploads
 public/uploads/*
 !public/uploads/.gitkeep
+.local-data/
 
 # logs
 *.log

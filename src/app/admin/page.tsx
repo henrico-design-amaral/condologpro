@@ -20,6 +20,8 @@ import {
   getDashboardStats,
   isPackageOverdue
 } from "@/lib/stats";
+import { ADMIN_ROLES } from "@/lib/auth/policy";
+import { requirePageOperator } from "@/lib/auth/server";
 
 export const dynamic = "force-dynamic";
 
@@ -32,10 +34,12 @@ const navItems = [
 ];
 
 export default async function AdminHomePage() {
+  const operator = await requirePageOperator(ADMIN_ROLES, "/admin");
   const [stats, buildingActivity, recentPackages] = await Promise.all([
-    getDashboardStats(),
-    getBuildingActivity(5),
+    getDashboardStats(operator.organizationId),
+    getBuildingActivity(operator.organizationId, 5),
     prisma.package.findMany({
+      where: { organizationId: operator.organizationId },
       select: {
         id: true,
         status: true,

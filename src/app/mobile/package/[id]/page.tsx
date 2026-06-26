@@ -8,6 +8,8 @@ import { prisma } from "@/lib/prisma";
 import { formatDateTime, formatRelativeHours } from "@/lib/format";
 import { buildPackageNotificationMessage, buildWhatsAppUrl } from "@/lib/whatsapp";
 import { isPackageOverdue } from "@/lib/stats";
+import { OPERATIONAL_ROLES } from "@/lib/auth/policy";
+import { requirePageOperator } from "@/lib/auth/server";
 
 export const dynamic = "force-dynamic";
 
@@ -28,13 +30,17 @@ const EVENT_LABEL: Record<string, string> = {
 async function markNotified(formData: FormData) {
   "use server";
 
+  const operator = await requirePageOperator(OPERATIONAL_ROLES, "/mobile/pending");
+
   const packageId = String(formData.get("packageId") ?? "");
 
   if (!packageId) {
     return;
   }
 
-  const pkg = await prisma.package.findUnique({ where: { id: packageId } });
+  const pkg = await prisma.package.findFirst({
+    where: { id: packageId, organizationId: operator.organizationId }
+  });
 
   if (!pkg || pkg.status === "PICKED_UP" || pkg.status === "CANCELLED") {
     return;
@@ -43,7 +49,7 @@ async function markNotified(formData: FormData) {
   const notifiedAt = new Date();
 
   await prisma.package.update({
-    where: { id: packageId },
+    where: { id: packageId, organizationId: operator.organizationId },
     data: {
       status: "NOTIFIED",
       notifiedAt,
@@ -66,6 +72,8 @@ async function markNotified(formData: FormData) {
 async function confirmPickup(formData: FormData) {
   "use server";
 
+  const operator = await requirePageOperator(OPERATIONAL_ROLES, "/mobile/pending");
+
   const packageId = String(formData.get("packageId") ?? "");
   const pickedUpByName = String(formData.get("pickedUpByName") ?? "").trim();
   const pickedUpByDocument = String(formData.get("pickedUpByDocument") ?? "").trim();
@@ -75,8 +83,8 @@ async function confirmPickup(formData: FormData) {
     return;
   }
 
-  const pkg = await prisma.package.findUnique({
-    where: { id: packageId }
+  const pkg = await prisma.package.findFirst({
+    where: { id: packageId, organizationId: operator.organizationId }
   });
 
   if (!pkg || pkg.status === "PICKED_UP") {
@@ -86,7 +94,7 @@ async function confirmPickup(formData: FormData) {
   const pickedUpAt = new Date();
 
   await prisma.package.update({
-    where: { id: packageId },
+    where: { id: packageId, organizationId: operator.organizationId },
     data: {
       status: "PICKED_UP",
       pickedUpAt,
@@ -116,8 +124,9 @@ async function confirmPickup(formData: FormData) {
 
 export default async function MobilePackageDetailPage({ params }: MobilePackagePageProps) {
   const { id } = await params;
-  const pkg = await prisma.package.findUnique({
-    where: { id },
+  const operator = await requirePageOperator(OPERATIONAL_ROLES, `/mobile/package/${id}`);
+  const pkg = await prisma.package.findFirst({
+    where: { id, organizationId: operator.organizationId },
     include: {
       resident: true,
       organization: true,
@@ -186,7 +195,7 @@ export default async function MobilePackageDetailPage({ params }: MobilePackageP
 
           {pkg.labelPhotoUrl ? (
             <img
-              src={pkg.labelPhotoUrl}
+              src={`/api/packages/${pkg.id}/label`}
               alt={`Etiqueta da encomenda ${pkg.packageCode ?? "sem código"}`}
               className="mt-4 aspect-[4/3] w-full rounded-[12px] border border-neutral-700 object-cover"
             />

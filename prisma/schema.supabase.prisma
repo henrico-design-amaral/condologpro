@@ -106,6 +106,7 @@ model Resident {
 
 model Operator {
   id             String       @id @default(cuid())
+  authSubject    String?      @unique
   organizationId String
   name           String
   role           OperatorRole @default(FRONT_DESK)
@@ -116,6 +117,7 @@ model Operator {
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@index([organizationId])
+  @@index([organizationId, isActive])
 }
 
 model Package {
@@ -123,6 +125,7 @@ model Package {
   organizationId     String
   unitId             String
   residentId         String?
+  clientRequestId    String?
   packageCode        String?
   carrier            String?
   labelPhotoUrl      String?
@@ -142,6 +145,7 @@ model Package {
   events       PackageEvent[]
 
   @@index([organizationId])
+  @@unique([organizationId, clientRequestId])
   @@index([unitId])
   @@index([residentId])
   @@index([status])

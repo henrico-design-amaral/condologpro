@@ -1,32 +1,48 @@
+import "server-only";
+
 import { randomUUID } from "crypto";
-import { mkdir, writeFile } from "fs/promises";
+import { mkdir, readFile, writeFile } from "fs/promises";
 import path from "path";
+
+import {
+  buildLabelStoragePath,
+  hasExpectedImageSignature,
+  joinSignedStorageUrl,
+  resolveStorageMode
+} from "@/lib/storage-policy";
 
 const MAX_LABEL_PHOTO_BYTES = 8 * 1024 * 1024;
 const ALLOWED_LABEL_PHOTO_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
-const DEFAULT_SIGNED_URL_TTL_SECONDS = 60 * 10;
+const DEFAULT_SIGNED_URL_TTL_SECONDS = 60;
+const LOCAL_UPLOAD_ROOT = path.join(process.cwd(), ".local-data", "uploads");
 
-const extensionByType: Record<string, string> = {
-  "image/jpeg": "jpg",
-  "image/png": "png",
-  "image/webp": "webp"
+const contentTypeByExtension: Record<string, string> = {
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".png": "image/png",
+  ".webp": "image/webp"
 };
 
 export type StoredLabelPhoto = {
-  url: string;
-  mode: "local" | "supabase-public" | "supabase-signed";
+  mode: "local" | "supabase-private";
   path: string;
   bucket: string | null;
 };
 
-export type StorageMode = "local" | "supabase-public" | "supabase-private" | "unknown";
+export type StorageMode = "local" | "supabase-private" | "misconfigured";
 
 export type SupabaseStorageConfig = {
   url: string;
   bucket: string;
   serviceKey: string;
-  publicBase: string;
 };
+
+export class StorageConfigurationError extends Error {
+  constructor() {
+    super("Supabase Storage está parcialmente configurado. Corrija as variáveis do ambiente.");
+    this.name = "StorageConfigurationError";
+  }
+}
 
 export function validateLabelPhoto(file: File) {
   if (!ALLOWED_LABEL_PHOTO_TYPES.has(file.type)) {
@@ -38,93 +54,126 @@ export function validateLabelPhoto(file: File) {
   }
 }
 
-function buildSafeLabelPath(file: File) {
-  const extension = extensionByType[file.type] ?? "jpg";
-  const date = new Date().toISOString().slice(0, 10);
-  return `labels/${date}/${randomUUID()}.${extension}`;
+function buildSafeLabelPath(file: File, organizationId: string) {
+  return buildLabelStoragePath({
+    organizationId,
+    mimeType: file.type,
+    date: new Date().toISOString().slice(0, 10),
+    id: randomUUID()
+  });
+}
+
+function storageEnvironment() {
+  return {
+    url: process.env.NEXT_PUBLIC_SUPABASE_URL?.trim(),
+    bucket: process.env.SUPABASE_STORAGE_BUCKET?.trim(),
+    serviceKey: process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()
+  };
 }
 
 export function getSupabaseStorageConfig(): SupabaseStorageConfig | null {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const bucket = process.env.SUPABASE_STORAGE_BUCKET;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const config = storageEnvironment();
+  const mode = resolveStorageMode(config);
 
-  if (!url || !bucket || !key) {
+  if (mode === "local") {
     return null;
   }
 
-  const trimmedUrl = url.replace(/\/$/, "");
+  if (mode === "misconfigured") {
+    throw new StorageConfigurationError();
+  }
 
   return {
-    url: trimmedUrl,
-    bucket,
-    serviceKey: key,
-    publicBase: `${trimmedUrl}/storage/v1/object/public/${bucket}`
+    url: config.url!.replace(/\/$/, ""),
+    bucket: config.bucket!,
+    serviceKey: config.serviceKey!
   };
 }
 
 export function detectStorageMode(): StorageMode {
-  const config = getSupabaseStorageConfig();
+  try {
+    return getSupabaseStorageConfig() ? "supabase-private" : "local";
+  } catch (error) {
+    if (error instanceof StorageConfigurationError) {
+      return "misconfigured";
+    }
 
-  if (!config) {
-    return "local";
+    throw error;
   }
-
-  const policyFlag = process.env.SUPABASE_STORAGE_PUBLIC?.toLowerCase();
-
-  if (policyFlag === "true" || policyFlag === "1") {
-    return "supabase-public";
-  }
-
-  if (policyFlag === "false" || policyFlag === "0") {
-    return "supabase-private";
-  }
-
-  return "unknown";
 }
 
-export async function storeLabelPhoto(file: File): Promise<StoredLabelPhoto> {
+function localFilePath(storagePath: string) {
+  const resolved = path.resolve(LOCAL_UPLOAD_ROOT, storagePath);
+  const root = path.resolve(LOCAL_UPLOAD_ROOT) + path.sep;
+
+  if (!resolved.startsWith(root)) {
+    throw new Error("Caminho de etiqueta inválido.");
+  }
+
+  return resolved;
+}
+
+export async function storeLabelPhoto(
+  file: File,
+  organizationId: string
+): Promise<StoredLabelPhoto> {
   validateLabelPhoto(file);
 
-  const storagePath = buildSafeLabelPath(file);
+  const storagePath = buildSafeLabelPath(file, organizationId);
   const bytes = Buffer.from(await file.arrayBuffer());
+
+  if (!hasExpectedImageSignature(bytes, file.type)) {
+    throw new Error("O conteúdo do arquivo não corresponde a uma imagem permitida.");
+  }
+
   const supabase = getSupabaseStorageConfig();
 
   if (supabase) {
     const uploadUrl = `${supabase.url}/storage/v1/object/${supabase.bucket}/${storagePath}`;
     const response = await fetch(uploadUrl, {
-      method: "PUT",
+      method: "POST",
       headers: {
+        apikey: supabase.serviceKey,
         Authorization: `Bearer ${supabase.serviceKey}`,
         "Content-Type": file.type,
-        "Cache-Control": "31536000"
+        "Cache-Control": "3600",
+        "x-upsert": "false"
       },
       body: bytes
     });
 
     if (!response.ok) {
-      const detail = await response.text();
-      throw new Error(`Falha ao enviar etiqueta para o Supabase Storage. ${detail}`);
+      throw new Error("Falha ao enviar etiqueta para o Storage privado.");
     }
 
     return {
-      mode: "supabase-public",
+      mode: "supabase-private",
       path: storagePath,
-      bucket: supabase.bucket,
-      url: `${supabase.publicBase}/${storagePath}`
+      bucket: supabase.bucket
     };
   }
 
-  const localPath = path.join(process.cwd(), "public", "uploads", storagePath);
-  await mkdir(path.dirname(localPath), { recursive: true });
-  await writeFile(localPath, bytes);
+  const target = localFilePath(storagePath);
+  await mkdir(path.dirname(target), { recursive: true });
+  await writeFile(target, bytes);
 
   return {
     mode: "local",
     path: storagePath,
-    bucket: null,
-    url: `/uploads/${storagePath}`
+    bucket: null
   };
+}
+
+export async function readLocalLabelPhoto(storagePath: string) {
+  const filePath = localFilePath(storagePath);
+  const body = await readFile(filePath);
+  const contentType = contentTypeByExtension[path.extname(filePath).toLowerCase()];
+
+  if (!contentType) {
+    throw new Error("Tipo de etiqueta armazenada inválido.");
+  }
+
+  return { body, contentType };
 }
 
 export async function createSignedLabelUrl(
@@ -141,6 +190,7 @@ export async function createSignedLabelUrl(
   const response = await fetch(signUrl, {
     method: "POST",
     headers: {
+      apikey: supabase.serviceKey,
       Authorization: `Bearer ${supabase.serviceKey}`,
       "Content-Type": "application/json"
     },
@@ -148,15 +198,14 @@ export async function createSignedLabelUrl(
   });
 
   if (!response.ok) {
-    const detail = await response.text();
-    throw new Error(`Falha ao assinar URL do Supabase Storage. ${detail}`);
+    throw new Error("Falha ao gerar acesso temporário para a etiqueta.");
   }
 
   const data = (await response.json()) as { signedURL?: string };
 
   if (!data.signedURL) {
-    return null;
+    throw new Error("Storage não retornou uma URL temporária.");
   }
 
-  return `${supabase.url}/storage/v1${data.signedURL}`;
+  return joinSignedStorageUrl(supabase.url, data.signedURL);
 }
