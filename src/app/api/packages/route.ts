@@ -4,10 +4,14 @@ import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
 import { buildPackageNotificationMessage, buildWhatsAppUrl } from "@/lib/whatsapp";
+import { authorizeApi } from "@/lib/auth/server";
+import { OPERATIONAL_ROLES } from "@/lib/auth/policy";
+import { isOrganizationLabelPath } from "@/lib/storage-policy";
 
 const createPackageSchema = z.object({
   residentId: z.string().min(1),
   unitId: z.string().min(1),
+  clientRequestId: z.string().uuid(),
   labelPhotoUrl: z.string().optional(),
   packageCode: z.string().optional(),
   carrier: z.string().optional(),
@@ -30,10 +34,17 @@ function parsePackageStatus(value: string | null) {
 }
 
 export async function GET(request: NextRequest) {
+  const authentication = await authorizeApi(OPERATIONAL_ROLES);
+
+  if (!authentication.ok) {
+    return authentication.response;
+  }
+
   const status = request.nextUrl.searchParams.get("status");
   const search = request.nextUrl.searchParams.get("q")?.trim();
   const parsedStatus = parsePackageStatus(status);
   const where: Prisma.PackageWhereInput = {
+    organizationId: authentication.operator.organizationId,
     ...(status === "pending"
       ? { status: { in: [PackageStatus.PENDING, PackageStatus.NOTIFIED] } }
       : parsedStatus
@@ -69,17 +80,37 @@ export async function GET(request: NextRequest) {
     take: 80
   });
 
-  return NextResponse.json({ packages });
+  return NextResponse.json({
+    packages: packages.map((pkg) => ({
+      ...pkg,
+      labelPhotoUrl: pkg.labelPhotoUrl ? `/api/packages/${pkg.id}/label` : null
+    }))
+  });
 }
 
 export async function POST(request: Request) {
+  const authentication = await authorizeApi(OPERATIONAL_ROLES);
+
+  if (!authentication.ok) {
+    return authentication.response;
+  }
+
   try {
     const body = createPackageSchema.parse(await request.json());
+    const labelPhotoPath = cleanOptional(body.labelPhotoUrl);
+
+    if (
+      labelPhotoPath &&
+      !isOrganizationLabelPath(labelPhotoPath, authentication.operator.organizationId)
+    ) {
+      return NextResponse.json({ error: "Caminho de etiqueta inválido." }, { status: 400 });
+    }
 
     const resident = await prisma.resident.findFirst({
       where: {
         id: body.residentId,
         unitId: body.unitId,
+        organizationId: authentication.operator.organizationId,
         isActive: true
       },
       include: {
@@ -99,12 +130,19 @@ export async function POST(request: Request) {
       );
     }
 
-    const pkg = await prisma.package.create({
-      data: {
+    const pkg = await prisma.package.upsert({
+      where: {
+        organizationId_clientRequestId: {
+          organizationId: resident.organizationId,
+          clientRequestId: body.clientRequestId
+        }
+      },
+      create: {
         organizationId: resident.organizationId,
         unitId: resident.unitId,
         residentId: resident.id,
-        labelPhotoUrl: cleanOptional(body.labelPhotoUrl),
+        clientRequestId: body.clientRequestId,
+        labelPhotoUrl: labelPhotoPath,
         packageCode: cleanOptional(body.packageCode),
         carrier: cleanOptional(body.carrier),
         notes: cleanOptional(body.notes),
@@ -116,6 +154,7 @@ export async function POST(request: Request) {
           }
         }
       },
+      update: {},
       include: {
         organization: true,
         resident: true,
@@ -138,7 +177,10 @@ export async function POST(request: Request) {
     const whatsappUrl = resident.phone ? buildWhatsAppUrl(resident.phone, message) : null;
 
     return NextResponse.json({
-      package: pkg,
+      package: {
+        ...pkg,
+        labelPhotoUrl: pkg.labelPhotoUrl ? `/api/packages/${pkg.id}/label` : null
+      },
       whatsappMessage: message,
       whatsappUrl
     });

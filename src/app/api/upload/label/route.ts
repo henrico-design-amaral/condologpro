@@ -1,8 +1,16 @@
 import { NextResponse } from "next/server";
 
 import { storeLabelPhoto } from "@/lib/storage";
+import { authorizeApi } from "@/lib/auth/server";
+import { OPERATIONAL_ROLES } from "@/lib/auth/policy";
 
 export async function POST(request: Request) {
+  const authentication = await authorizeApi(OPERATIONAL_ROLES);
+
+  if (!authentication.ok) {
+    return authentication.response;
+  }
+
   try {
     const formData = await request.formData();
     const file = formData.get("file");
@@ -14,7 +22,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const stored = await storeLabelPhoto(file);
+    const stored = await storeLabelPhoto(file, authentication.operator.organizationId);
     return NextResponse.json(stored);
   } catch (error) {
     return NextResponse.json(

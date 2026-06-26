@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
+import { authorizeApi } from "@/lib/auth/server";
+import { OPERATIONAL_ROLES } from "@/lib/auth/policy";
 
 type NotifyRouteContext = {
   params: Promise<{
@@ -9,10 +11,16 @@ type NotifyRouteContext = {
 };
 
 export async function POST(_request: Request, context: NotifyRouteContext) {
+  const authentication = await authorizeApi(OPERATIONAL_ROLES);
+
+  if (!authentication.ok) {
+    return authentication.response;
+  }
+
   const { id } = await context.params;
 
-  const pkg = await prisma.package.findUnique({
-    where: { id }
+  const pkg = await prisma.package.findFirst({
+    where: { id, organizationId: authentication.operator.organizationId }
   });
 
   if (!pkg) {
@@ -29,7 +37,7 @@ export async function POST(_request: Request, context: NotifyRouteContext) {
   const notifiedAt = new Date();
 
   const updated = await prisma.package.update({
-    where: { id },
+    where: { id, organizationId: authentication.operator.organizationId },
     data: {
       status: "NOTIFIED",
       notifiedAt,

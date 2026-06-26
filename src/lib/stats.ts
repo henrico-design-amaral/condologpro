@@ -76,7 +76,7 @@ function asNullableNumber(value: unknown) {
   return asNumber(value);
 }
 
-export async function getDashboardStats(): Promise<DashboardStats> {
+export async function getDashboardStats(organizationId: string): Promise<DashboardStats> {
   const today = startOfDay(new Date());
   const yesterday = startOfYesterday();
   const overdueLimit = overdueThresholdDate();
@@ -108,15 +108,16 @@ export async function getDashboardStats(): Promise<DashboardStats> {
             FROM (
               SELECT receivedAt, pickedUpAt
               FROM Package
-              WHERE status = 'PICKED_UP' AND pickedUpAt IS NOT NULL
+              WHERE organizationId = ${organizationId} AND status = 'PICKED_UP' AND pickedUpAt IS NOT NULL
               ORDER BY pickedUpAt DESC
               LIMIT 40
             ) picked
           ) AS averagePickupHours,
-          (SELECT COUNT(*) FROM Resident WHERE isActive = 1) AS activeResidentCount,
-          (SELECT COUNT(*) FROM Building) AS totalBuildings,
-          (SELECT COUNT(*) FROM Unit) AS totalUnits
+          (SELECT COUNT(*) FROM Resident WHERE organizationId = ${organizationId} AND isActive = 1) AS activeResidentCount,
+          (SELECT COUNT(*) FROM Building WHERE organizationId = ${organizationId}) AS totalBuildings,
+          (SELECT COUNT(*) FROM Unit WHERE organizationId = ${organizationId}) AS totalUnits
         FROM Package
+        WHERE organizationId = ${organizationId}
       `
     : await prisma.$queryRaw<
         Array<{
@@ -144,15 +145,16 @@ export async function getDashboardStats(): Promise<DashboardStats> {
             FROM (
               SELECT "receivedAt", "pickedUpAt"
               FROM "Package"
-              WHERE status = 'PICKED_UP' AND "pickedUpAt" IS NOT NULL
+              WHERE "organizationId" = ${organizationId} AND status = 'PICKED_UP' AND "pickedUpAt" IS NOT NULL
               ORDER BY "pickedUpAt" DESC
               LIMIT 40
             ) picked
           ) AS "averagePickupHours",
-          (SELECT COUNT(*) FROM "Resident" WHERE "isActive" = true) AS "activeResidentCount",
-          (SELECT COUNT(*) FROM "Building") AS "totalBuildings",
-          (SELECT COUNT(*) FROM "Unit") AS "totalUnits"
+          (SELECT COUNT(*) FROM "Resident" WHERE "organizationId" = ${organizationId} AND "isActive" = true) AS "activeResidentCount",
+          (SELECT COUNT(*) FROM "Building" WHERE "organizationId" = ${organizationId}) AS "totalBuildings",
+          (SELECT COUNT(*) FROM "Unit" WHERE "organizationId" = ${organizationId}) AS "totalUnits"
         FROM "Package"
+        WHERE "organizationId" = ${organizationId}
       `;
 
   const stats = rows[0];
@@ -171,7 +173,10 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   };
 }
 
-export async function getBuildingActivity(limit = 5): Promise<BuildingActivity[]> {
+export async function getBuildingActivity(
+  organizationId: string,
+  limit = 5
+): Promise<BuildingActivity[]> {
   const rows = isSqliteDatasource()
     ? await prisma.$queryRaw<
         Array<{ buildingLabel: string; totalPackages: unknown; pendingPackages: unknown }>
@@ -183,6 +188,7 @@ export async function getBuildingActivity(limit = 5): Promise<BuildingActivity[]
         FROM Package p
         INNER JOIN Unit u ON u.id = p.unitId
         INNER JOIN Building b ON b.id = u.buildingId
+        WHERE p.organizationId = ${organizationId}
         GROUP BY b.label
         ORDER BY totalPackages DESC, b.label ASC
         LIMIT ${limit}
@@ -197,6 +203,7 @@ export async function getBuildingActivity(limit = 5): Promise<BuildingActivity[]
         FROM "Package" p
         INNER JOIN "Unit" u ON u.id = p."unitId"
         INNER JOIN "Building" b ON b.id = u."buildingId"
+        WHERE p."organizationId" = ${organizationId}
         GROUP BY b.label
         ORDER BY "totalPackages" DESC, b.label ASC
         LIMIT ${limit}
@@ -209,7 +216,9 @@ export async function getBuildingActivity(limit = 5): Promise<BuildingActivity[]
   }));
 }
 
-export async function getMobileSummaryStats(): Promise<MobileSummaryStats> {
+export async function getMobileSummaryStats(
+  organizationId: string
+): Promise<MobileSummaryStats> {
   const today = startOfDay(new Date());
   const overdueLimit = overdueThresholdDate();
 
@@ -230,6 +239,7 @@ export async function getMobileSummaryStats(): Promise<MobileSummaryStats> {
           COALESCE(SUM(CASE WHEN status = 'PICKED_UP' AND pickedUpAt >= ${today} THEN 1 ELSE 0 END), 0) AS pickedUpTodayCount,
           COALESCE(SUM(CASE WHEN status IN ('PENDING', 'NOTIFIED') AND receivedAt < ${overdueLimit} THEN 1 ELSE 0 END), 0) AS overdueCount
         FROM Package
+        WHERE organizationId = ${organizationId}
       `
     : await prisma.$queryRaw<
         Array<{
@@ -247,6 +257,7 @@ export async function getMobileSummaryStats(): Promise<MobileSummaryStats> {
           COALESCE(SUM(CASE WHEN status = 'PICKED_UP' AND "pickedUpAt" >= ${today} THEN 1 ELSE 0 END), 0) AS "pickedUpTodayCount",
           COALESCE(SUM(CASE WHEN status IN ('PENDING', 'NOTIFIED') AND "receivedAt" < ${overdueLimit} THEN 1 ELSE 0 END), 0) AS "overdueCount"
         FROM "Package"
+        WHERE "organizationId" = ${organizationId}
       `;
 
   const stats = rows[0];

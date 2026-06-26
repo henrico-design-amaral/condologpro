@@ -108,6 +108,7 @@ function cameraErrorMessage(error: unknown) {
 }
 
 export function IntakeForm() {
+  const clientRequestIdRef = useRef(globalThis.crypto.randomUUID());
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [cameraState, setCameraState] = useState<"idle" | "starting" | "ready" | "error">("idle");
@@ -427,13 +428,13 @@ export function IntakeForm() {
       method: "POST",
       body: formData
     });
-    const data = (await response.json()) as { url?: string; error?: string };
+    const data = (await response.json()) as { path?: string; error?: string };
 
-    if (!response.ok || !data.url) {
+    if (!response.ok || !data.path) {
       throw new Error(data.error ?? "Não foi possível salvar a foto da etiqueta.");
     }
 
-    return data.url;
+    return data.path;
   }
 
   async function submitPackage() {
@@ -456,6 +457,7 @@ export function IntakeForm() {
         body: JSON.stringify({
           residentId: selectedResident.id,
           unitId: selectedResident.unitId,
+          clientRequestId: clientRequestIdRef.current,
           labelPhotoUrl: labelPhotoUrl ?? undefined,
           packageCode,
           carrier,
@@ -469,6 +471,7 @@ export function IntakeForm() {
       }
 
       setCreated(data);
+      clientRequestIdRef.current = globalThis.crypto.randomUUID();
     } catch (error) {
       setFormError(error instanceof Error ? error.message : "Não foi possível registrar a encomenda.");
     } finally {
