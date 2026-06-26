@@ -20,6 +20,13 @@ Memória operacional contínua do trabalho com Henrico. Fatos verificados, sem s
 - As modificações locais dessa feature de autenticação e infraestrutura do Supabase foram salvas na pilha de stash do Git (SHA: `b3b16149f1358be1505f1985d1552438916f381e`) para permitir a aplicação limpa da governança.
 - O build de produção local está estruturado para preparar o banco SQLite (`prisma:push` e `prisma:seed`) antes do build do Next.js via scripts no CI do GitHub Actions.
 
+## Ciclo Phase 2 Auth/Cloud/Storage (2026-06-26)
+- Branch `feature/phase-2-auth-cloud-foundation` publicada no GitHub.
+- PR aberto contra `main`: `https://github.com/henrico-design-amaral/condologpro/pull/13` (`feat: add auth and storage cloud foundation`).
+- CI remoto inicial: `PostgreSQL migrations`, Vercel e Vercel Preview Comments passaram; `Typecheck, validate, build` falhou em `npm run prisma:supabase:validate`.
+- Causa verificada: o job principal do GitHub Actions definia `DATABASE_URL=file:./dev.db`, mas não definia `DIRECT_URL`, exigido por `prisma/schema.supabase.prisma`.
+- Decisão técnica: usar `DIRECT_URL` placeholder local sem segredo real no job principal apenas para validação sintática do schema PostgreSQL; não usar Supabase remoto real.
+
 ## Pontos de atenção e limites de escopo
 - **Credenciais de Produção**: Não há credenciais Supabase reais configuradas no ambiente local.
 - **Segurança**: Nunca expor chaves de API privadas ou a service role key do Supabase. Chamadas de storage assinadas devem rodar estritamente server-side.
