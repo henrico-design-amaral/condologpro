@@ -85,7 +85,7 @@ import '../styles/condologpro.css';
       </section>
     </main>
 
-    <script>
+    <script is:inline>
       document.documentElement.classList.add('js-enabled');
       const header=document.querySelector('[data-header]');const progress=document.querySelector('.scroll-progress span');
       const update=()=>{header?.classList.toggle('is-scrolled',scrollY>20);const max=document.documentElement.scrollHeight-innerHeight;if(progress)progress.style.transform=`scaleX(${max>0?scrollY/max:0})`};
