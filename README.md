@@ -72,7 +72,7 @@ Docker não está disponível no ambiente Windows atual, por isso a validação 
 
 ## Estado externo em 2026-08-01
 
-O projeto Supabase `condologpro` está pausado. A tentativa de restauração foi recusada porque a organização já usa os dois slots gratuitos ativos. O código, a migration e os testes locais estão prontos, mas Auth, RLS, Storage, GitHub secrets Supabase, Hostinger e produção não podem ser declarados validados até o projeto voltar a ficar ativo.
+O projeto Supabase anterior `condologpro` (`jbzpmeudvgrwodgqgozk`) foi excluído no painel após autorização explícita. A criação do substituto foi recusada porque a organização continua usando os dois slots gratuitos ativos com MotoristaOps e PersonalOps. Não existe um projeto Supabase canônico atual até que um slot seja liberado ou o plano seja atualizado. O código, a migration e os testes locais estão prontos, mas Auth, RLS, Storage, GitHub secrets Supabase, Hostinger e produção não podem ser declarados validados sem o substituto saudável.
 
 Não consigo confirmar isso em produção.
 

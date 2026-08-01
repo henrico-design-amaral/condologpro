@@ -21,7 +21,7 @@
 
 ## Bloqueado externamente
 
-- [ ] Restaurar o projeto Supabase canônico (limite gratuito da organização).
+- [ ] Criar o projeto Supabase substituto em `sa-east-1` (limite gratuito da organização).
 - [ ] Aplicar migration e seed no Supabase.
 - [ ] Gerar `database.types.ts` do schema remoto saudável.
 - [ ] Criar identidades de teste Auth e executar RLS/Storage/concurrency real.

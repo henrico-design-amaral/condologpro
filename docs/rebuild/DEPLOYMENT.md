@@ -14,18 +14,19 @@ npm run legacy:audit
 
 ## Supabase
 
-Quando o projeto `jbzpmeudvgrwodgqgozk` estiver ativo:
+Quando o projeto Supabase substituto `condologpro` estiver criado e saudável:
 
-1. confirmar que não há schema de produção útil a sobrescrever;
-2. aplicar `20260801160101_rebuild_astro_supabase_foundation.sql` como migration;
-3. executar `supabase/seed.sql` somente no ambiente de validação/piloto aprovado;
-4. gerar os tipos TypeScript do schema saudável;
-5. publicar `admin-invite-user` com `verify_jwt=true`;
-6. criar contas E2E com `npm run supabase:seed:users` em ambiente controlado;
-7. rodar `npm run supabase:validate:security`;
-8. rodar `npm run supabase:validate:flow`;
-9. consultar advisors de segurança e performance;
-10. remover/anonimizar fixtures antes de dados reais, se o ambiente for produção.
+1. registrar o novo project ref e confirmar região `sa-east-1`;
+2. confirmar que não há schema de produção útil a sobrescrever;
+3. aplicar `20260801160101_rebuild_astro_supabase_foundation.sql` como migration;
+4. executar `supabase/seed.sql` somente no ambiente de validação/piloto aprovado;
+5. gerar os tipos TypeScript do schema saudável;
+6. publicar `admin-invite-user` com `verify_jwt=true`;
+7. criar contas E2E com `npm run supabase:seed:users` em ambiente controlado;
+8. rodar `npm run supabase:validate:security`;
+9. rodar `npm run supabase:validate:flow`;
+10. consultar advisors de segurança e performance;
+11. remover/anonimizar fixtures antes de dados reais, se o ambiente for produção.
 
 ## GitHub
 

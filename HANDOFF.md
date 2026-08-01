@@ -17,13 +17,13 @@ O produto foi reconstruído no branch `codex/rebuild-astro-supabase`. A implemen
 
 ## O que não foi confirmado
 
-O Supabase canônico não foi restaurado porque a organização excedeu o limite gratuito de projetos ativos. Logo, não foram confirmados schema remoto, Auth real, RLS real, Storage real, Edge Function, tipos gerados, workflow remoto, Hostinger ou produção.
+O Supabase anterior foi excluído, mas o substituto não pôde ser criado porque a organização excedeu o limite gratuito de projetos ativos. Logo, não foram confirmados schema remoto, Auth real, RLS real, Storage real, Edge Function, tipos gerados, integração remota, Hostinger ou produção.
 
 Não consigo confirmar isso.
 
 ## Retomada mínima
 
 1. Liberar slot/plano Supabase sem pausar outro projeto ativo por inferência.
-2. Restaurar `jbzpmeudvgrwodgqgozk`.
+2. Criar um novo projeto `condologpro` em `sa-east-1` e registrar o novo project ref.
 3. Seguir `docs/rebuild/DEPLOYMENT.md` do passo de migration em diante.
 4. Só então declarar produção validada.

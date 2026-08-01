@@ -14,9 +14,9 @@
 
 ## [Certo] Bloqueio externo
 
-A restauração do Supabase canônico falhou com limite de dois projetos gratuitos ativos na organização. A geração de tipos também recusou o projeto porque ele precisa estar ativo e saudável.
+O projeto Supabase anterior `jbzpmeudvgrwodgqgozk` foi excluído no painel em 2026-08-01 após autorização explícita. A criação do substituto `condologpro` em `sa-east-1` foi recusada porque MotoristaOps e PersonalOps já ocupam os dois slots gratuitos ativos da organização. A geração de tipos continua impossível sem um projeto ativo e saudável.
 
-Por isso não foram executados: migration remota, Auth real, RLS real, Storage real, URL expirada real, Edge Function, advisors, GitHub CI remoto, Hostinger, subdomínio ou aparelho físico.
+Por isso não foram executados: migration remota, Auth real, RLS real, Storage real, URL expirada real, Edge Function, advisors, integração CI com o Supabase real, Hostinger, fluxo no subdomínio ou aparelho físico.
 
 Não consigo confirmar isso em produção.
 
@@ -32,4 +32,4 @@ Não consigo confirmar isso em produção.
 
 ## Próximo passo mínimo
 
-Liberar um slot ou plano no Supabase sem alterar outro projeto ativo por inferência; então seguir `DEPLOYMENT.md` e executar as provas remotas antes de qualquer deploy de produção.
+Liberar um slot ou plano no Supabase sem alterar outro projeto ativo por inferência; criar o substituto e registrar seu novo project ref; então seguir `DEPLOYMENT.md` e executar as provas remotas antes de qualquer deploy de produção.

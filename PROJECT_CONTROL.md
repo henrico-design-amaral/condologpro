@@ -25,10 +25,10 @@ Runtime: Astro 7 estático na Hostinger, ilha Preact autenticada e Supabase como
 
 ## Bloqueio
 
-O projeto Supabase canônico `jbzpmeudvgrwodgqgozk` está `INACTIVE`. Em 2026-08-01 a restauração retornou limite de dois projetos gratuitos ativos na organização. Nenhum outro projeto será pausado sem autorização específica.
+O projeto Supabase anterior `jbzpmeudvgrwodgqgozk` foi excluído em 2026-08-01 após autorização explícita. A criação imediata do substituto `condologpro` em `sa-east-1` foi bloqueada porque a organização já usa os dois slots gratuitos ativos com MotoristaOps e PersonalOps. Nenhum desses projetos será pausado e nenhum plano pago será contratado sem autorização específica.
 
-Sem restaurar o projeto não é possível aplicar migration, gerar tipos remotos, criar usuários Auth, comprovar RLS/Storage real, configurar as variáveis GitHub nem executar o fluxo em produção.
+Sem criar o substituto não é possível aplicar migration, gerar tipos remotos, criar usuários Auth, comprovar RLS/Storage real, configurar as variáveis GitHub nem executar o fluxo em produção. O ID excluído é apenas histórico e não deve ser reutilizado.
 
 ## Próximo passo mínimo
 
-Liberar um slot Supabase ou atualizar o plano da organização; em seguida executar `docs/rebuild/DEPLOYMENT.md` a partir do gate de migration.
+Liberar um slot Supabase ou atualizar o plano da organização; criar um novo `condologpro` em `sa-east-1`; registrar o novo project ref; em seguida executar `docs/rebuild/DEPLOYMENT.md` a partir do gate de migration.
