@@ -1,0 +1,80 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-01T12:56:57.4581958-03:00",
+  "title": "Design System: CondoLogPro",
+  "extensions": {
+    "colorMeta": {
+      "signal-teal": { "role": "primary", "displayName": "Signal Teal", "canonical": "#00A996", "tonalRamp": ["#062B28", "#0A4942", "#0B675D", "#078577", "#00A996", "#43C2B2", "#8BDBD0", "#D7F3EF"] },
+      "attention-amber": { "role": "secondary", "displayName": "Attention Amber", "canonical": "#D47B12", "tonalRamp": ["#321B05", "#542E08", "#77430B", "#9B5A0D", "#D47B12", "#E7A24A", "#F2C98A", "#FCEDD5"] },
+      "operational-dark": { "role": "neutral", "displayName": "Operational Dark", "canonical": "#151313", "tonalRamp": ["#151313", "#282321", "#3E3834", "#5C544D", "#756E66", "#A59D94", "#D8D2C9", "#F3F0EA"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Page title", "purpose": "Marca e orientação de página, nunca rótulos." },
+      "body": { "displayName": "Operational text", "purpose": "Dados, formulários, tabelas e instruções." },
+      "label": { "displayName": "Control label", "purpose": "Ações e metadados curtos." }
+    },
+    "shadows": [
+      { "name": "overlay", "value": "0 6px 8px rgba(21, 19, 19, 0.18)", "purpose": "Menus, toasts e diálogos apenas." }
+    ],
+    "motion": [
+      { "name": "state", "value": "180ms cubic-bezier(0.22, 1, 0.36, 1)", "purpose": "Feedback de hover, foco e mudança de estado." }
+    ],
+    "breakpoints": [
+      { "name": "mobile", "value": "390px" },
+      { "name": "tablet", "value": "768px" },
+      { "name": "desktop", "value": "1024px" },
+      { "name": "wide", "value": "1440px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Ação que avança o fluxo operacional.",
+      "html": "<button class=\"ds-btn-primary\">Salvar encomenda</button>",
+      "css": ".ds-btn-primary { min-height:48px; padding:14px 18px; border:0; border-radius:10px; background:#00A996; color:#151313; font:650 14px Inter,system-ui,sans-serif; transition:background 180ms cubic-bezier(.22,1,.36,1); } .ds-btn-primary:hover { background:#43C2B2; } .ds-btn-primary:focus-visible { outline:3px solid #FFC83D; outline-offset:3px; }"
+    },
+    {
+      "name": "Operational Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Campo previsível com foco inequívoco.",
+      "html": "<label class=\"ds-field\">Código de rastreio<input value=\"BR123456789\" /></label>",
+      "css": ".ds-field { display:grid; gap:6px; color:#1A1715; font:650 13px Inter,system-ui,sans-serif; } .ds-field input { min-height:48px; padding:12px 14px; border:1px solid #A59D94; border-radius:10px; background:#F3F0EA; color:#1A1715; font:450 16px Inter,system-ui,sans-serif; } .ds-field input:focus-visible { outline:3px solid rgba(0,169,150,.3); border-color:#00A996; }"
+    },
+    {
+      "name": "Status Chip",
+      "kind": "chip",
+      "description": "Estado com texto e contraste, sem depender só de cor.",
+      "html": "<span class=\"ds-status\">● Aguardando retirada</span>",
+      "css": ".ds-status { display:inline-flex; align-items:center; min-height:28px; padding:5px 9px; border-radius:999px; background:#E2EAF3; color:#244D77; font:650 12px Inter,system-ui,sans-serif; }"
+    },
+    {
+      "name": "Operational Navigation",
+      "kind": "nav",
+      "description": "Navegação compacta com estado ativo textual.",
+      "html": "<nav class=\"ds-nav\"><a class=\"is-active\" href=\"#\">Receber</a><a href=\"#\">Encomendas</a></nav>",
+      "css": ".ds-nav { display:flex; gap:4px; padding:6px; border-radius:10px; background:#282321; } .ds-nav a { min-height:44px; display:flex; align-items:center; padding:0 14px; border-radius:6px; color:#D8D2C9; font:600 14px Inter,system-ui,sans-serif; text-decoration:none; } .ds-nav a.is-active { background:#00A996; color:#151313; } .ds-nav a:focus-visible { outline:3px solid #FFC83D; outline-offset:2px; }"
+    },
+    {
+      "name": "Evidence Container",
+      "kind": "card",
+      "description": "Agrupamento estrutural plano para registro e auditoria.",
+      "html": "<article class=\"ds-evidence\"><strong>Etiqueta recebida</strong><span>Hoje, 09:41 · Portaria principal</span></article>",
+      "css": ".ds-evidence { display:grid; gap:6px; padding:16px; border:1px solid #D8D2C9; border-radius:10px; background:#F3F0EA; color:#1A1715; font:450 14px Inter,system-ui,sans-serif; } .ds-evidence strong { font-weight:650; } .ds-evidence span { color:#756E66; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Operational Signal",
+    "overview": "O sistema se comporta como uma bancada de portaria bem organizada: superfícies claras para leitura prolongada, uma camada escura para navegação e captura, e sinais raros que indicam a próxima ação.",
+    "keyCharacteristics": ["Mobile-first no recebimento, desktop denso na administração.", "Accent restrito a ação, seleção e estado.", "Superfícies planas e separação estrutural por tom.", "Ícones acompanhados de rótulos nas ações críticas.", "Formulários previsíveis, recuperáveis e operáveis com teclado."],
+    "rules": [
+      { "name": "Signal Budget", "body": "O accent ocupa no máximo 10% de uma tela operacional; se tudo chama atenção, nada orienta.", "section": "colors" },
+      { "name": "Product Type", "body": "Syne cria orientação; Inter executa o trabalho. Rótulos em caixa alta corrida são proibidos.", "section": "typography" },
+      { "name": "Flat by Default", "body": "Cartão com borda e sombra difusa ao mesmo tempo é proibido.", "section": "elevation" }
+    ],
+    "dos": ["Do manter a ação primária próxima do campo ou evidência que ela conclui.", "Do preservar rascunho local e explicar a recuperação após falha de rede.", "Do combinar texto, ícone e cor em cada status."],
+    "donts": ["Don't criar página de portfólio ou landing page que descreve telas em vez de permitir operá-las.", "Don't usar dashboard SaaS genérico com gráficos decorativos, métricas inventadas ou cartões repetidos.", "Don't usar interface neon, glassmorphism, gradientes decorativos ou motion coreografado.", "Don't registrar abrir o WhatsApp como mensagem enviada, nem tratar OCR como dado confirmado."]
+  }
+}

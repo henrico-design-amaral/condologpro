@@ -36,6 +36,7 @@ yarn-error.log*
 Thumbs.db
 .vscode/
 .idea/
+.claude/settings.local.json
 
 # misc
 coverage/
@@ -50,6 +51,17 @@ prisma/dev.db-journal
 
 # vercel local project metadata
 .vercel/
+
+# local Supabase runtime
+.supabase/
+supabase/.branches/
+supabase/.temp/
+
+# local QA evidence
+output/
+test-results/
+playwright-report/
+.henrico-gates/
 
 # local env secrets
 .env
