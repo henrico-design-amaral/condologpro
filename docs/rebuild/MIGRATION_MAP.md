@@ -30,12 +30,12 @@ Novos estados sem equivalente direto: `awaiting_identification`, `returned` e `p
 ## Arquivos
 
 - `labelPhotoUrl` local será interpretado como fonte legada.
-- O importador envia o arquivo para `package-evidence/<condominium>/<package>/` e grava somente o path do objeto.
+- O auditor pode exportar JSON somente após revisão explícita. Como a base encontrada é integralmente sintética, a exportação/importação automática fica bloqueada por padrão.
 - Base64 nunca entra no Postgres.
 
 ## Remoções após paridade
 
-- `src/app`, `src/components` e bibliotecas Next/Prisma.
+- `src/app`, componentes React legados (`src/components/ui`, `status-badge`) e bibliotecas Next/Prisma.
 - `prisma`, `next.config.ts`, `next-env.d.ts`, `postcss.config.mjs` e `vercel.json`.
 - scripts e documentação que tratam SQLite/Vercel como runtime atual.
 

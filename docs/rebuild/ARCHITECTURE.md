@@ -40,9 +40,16 @@ Todas as tabelas expostas têm RLS. Funções auxiliares de policy ficam no sche
 - `record_package_notification`: registra confirmação humana e avança status.
 - `complete_package_pickup`: bloqueia a linha, impede segunda retirada, cria comprovante e auditoria.
 - `reopen_package`: correção exclusiva de administração, sem apagar história.
-- `search_residents` e `search_packages`: busca paginada e normalizada no servidor.
+- `search_residents`: busca normalizada no servidor; encomendas usam consulta Data API paginada, filtrada e indexada.
 - `get_dashboard_stats`: agregados acionáveis, sem carregar a base no cliente.
 
 ## Deploy
 
 O GitHub Actions executa instalação limpa, format check, lint, TypeScript, testes, auditoria, Astro check, E2E e build. O job de deploy só roda depois dos gates, verifica `dist`, valida as variáveis públicas Supabase e publica via SFTP com os secrets existentes.
+
+## Limites conscientes
+
+- Realtime não é ativado: o volume e o fluxo atual não justificam conexão permanente.
+- O rascunho local não substitui o Postgres; existe apenas para recuperar digitação após falha de rede.
+- A service role não participa do build. Ela é aceita apenas por scripts locais e pelo runtime protegido da Edge Function.
+- A aplicação estática usa gate de sessão no cliente, mas a fronteira real de autorização é RLS/RPC no Supabase.

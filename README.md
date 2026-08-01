@@ -1,33 +1,90 @@
-﻿# CondoLogPro
+# CondoLogPro
 
-Sistema local-first para gestão de encomendas condominiais.
+Produto operacional para recebimento, identificação, comunicação e retirada de encomendas em condomínios. O runtime atual é Astro 7 + TypeScript estrito + Preact + Supabase; Next.js, Prisma, SQLite e Vercel não participam mais da aplicação.
 
-## Objetivo
+## Fluxo
 
-Criar um MVP funcional para teste real em condomínio, com foco inicial no fluxo operacional da portaria:
+1. Usuário ativo entra pelo Supabase Auth.
+2. Portaria fotografa ou escolhe a etiqueta.
+3. A imagem original e uma versão comprimida são preparadas; Tesseract roda localmente e sugere campos.
+4. Operador confirma ou corrige os dados, associa unidade/morador e recebe aviso de provável duplicidade.
+5. Supabase Storage guarda os arquivos em bucket privado e uma RPC transacional cria encomenda, OCR, histórico e auditoria.
+6. O WhatsApp é aberto com mensagem editável; o envio só muda de estado quando o operador confirma que enviou.
+7. A retirada usa nome, relação, documento parcial, comprovante opcional e controle de versão contra dois operadores simultâneos.
 
-1. Portaria/administração recebe pacote.
-2. Fotografa a etiqueta.
-3. Sistema cria entrada da encomenda.
-4. Sistema associa a unidade, bloco, apartamento e morador.
-5. Sistema gera mensagem de WhatsApp para avisar o morador.
-6. Na retirada, a portaria baixa o pacote com registro digital.
+OCR, câmera e WhatsApp nunca são ações falsas: todos têm fallback manual ou confirmação humana explícita.
 
-## Contexto real de uso
+## Stack
 
-O projeto nasce a partir de um fluxo manual observado em condomínio residencial de grande porte, onde a administração recebe encomendas, registra dados em caderno físico, envia aviso manual por WhatsApp e coleta assinatura no momento da retirada.
+- Astro 7, ilha Preact e CSS por tokens;
+- Supabase Auth, Postgres, Storage privado e Edge Function administrativa;
+- RLS por condomínio, usuário ativo e papel;
+- Tesseract.js no navegador;
+- Vitest, PGlite, Playwright e axe;
+- GitHub Actions e SFTP Hostinger.
 
-## Primeira versão
+## Desenvolvimento
 
-A primeira versão deve ser local-first e funcionar como protótipo operacional dentro do condomínio.
+```bash
+npm ci
+cp .env.example .env.local
+npm run dev
+```
 
-- Portaria: uso mobile.
-- Administração: uso desktop.
-- Banco local: SQLite.
-- Upload de fotos: armazenamento local.
-- WhatsApp: envio assistido via link/mensagem pronta.
-- OCR: desejável, mas sempre com fallback manual.
+Variáveis públicas necessárias:
 
-## Princípio central
+- `PUBLIC_SUPABASE_URL`
+- `PUBLIC_SUPABASE_PUBLISHABLE_KEY`
 
-Não mudar a rotina da portaria. Digitalizar o que já funciona manualmente.
+`SUPABASE_SERVICE_ROLE_KEY` é aceita somente pelos scripts locais de seed. Nunca use prefixo `PUBLIC_` nela.
+
+## Validação
+
+```bash
+npm run format
+npm run lint
+npm run typecheck
+npm run test
+npm run check
+npm run build
+npm run security
+npm run test:e2e
+```
+
+O teste de banco executa a migration e o seed em Postgres embutido limpo. As provas reais de RLS/Storage e concorrência ficam em:
+
+```bash
+npm run supabase:validate:security
+npm run supabase:validate:flow
+```
+
+Esses dois comandos exigem o projeto Supabase ativo e as identidades E2E do `.env.example`.
+
+## Supabase
+
+```bash
+npx supabase start
+npx supabase db reset
+npm run supabase:seed:users
+```
+
+Docker não está disponível no ambiente Windows atual, por isso a validação local de schema usa PGlite. A migration canônica é `supabase/migrations/20260801160101_rebuild_astro_supabase_foundation.sql`.
+
+## Estado externo em 2026-08-01
+
+O projeto Supabase `condologpro` está pausado. A tentativa de restauração foi recusada porque a organização já usa os dois slots gratuitos ativos. O código, a migration e os testes locais estão prontos, mas Auth, RLS, Storage, GitHub secrets Supabase, Hostinger e produção não podem ser declarados validados até o projeto voltar a ficar ativo.
+
+Não consigo confirmar isso em produção.
+
+## Documentação atual
+
+- `PRODUCT.md` e `DESIGN.md`: produto e linguagem visual;
+- `docs/rebuild/ARCHITECTURE.md`: arquitetura e fronteiras;
+- `docs/rebuild/DATA_MODEL.md`: entidades e transações;
+- `docs/rebuild/OCR.md`: câmera, imagem e reconhecimento;
+- `docs/rebuild/SECURITY.md`: RLS, Storage e privacidade;
+- `docs/rebuild/DEPLOYMENT.md`: GitHub e Hostinger;
+- `docs/rebuild/OPERATIONAL_CHECKLIST.md`: checklist de piloto;
+- `docs/rebuild/VALIDATION_REPORT_2026-08-01.md`: evidências e bloqueio atual.
+
+Arquivos fora de `docs/rebuild` podem registrar decisões históricas do runtime Next/SQLite e não substituem esta fonte canônica.

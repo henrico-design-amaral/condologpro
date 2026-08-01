@@ -1,62 +1,29 @@
 # HANDOFF — CondoLogPro
 
-## Último estado conhecido
+## Decisão
 
-Branch atual: `infra/supabase-vercel-camera-mvp`.
+O produto foi reconstruído no branch `codex/rebuild-astro-supabase`. A implementação anterior Next/Prisma/SQLite/Vercel foi inventariada, mapeada em `docs/rebuild/MIGRATION_MAP.md` e removida do runtime.
 
-Esta branch está resolvendo o merge de `main` após PR #6. O estado final deve preservar:
+## O que funciona localmente
 
-- PR #6: CI prepara SQLite antes de `typecheck`/`build`, roda `prisma:push` e `prisma:seed`, páginas DB-backed são `force-dynamic`, docs cloud-ready atualizados.
-- Branch atual: câmera-first mobile intake, Supabase/Vercel setup, storage abstraction, OCR opcional, autocomplete, criação de pacote e WhatsApp success flow.
+- Astro/Preact renderiza a aplicação autenticada e responsiva.
+- Câmera usa `getUserMedia`; arquivo é fallback explícito.
+- Imagem original e thumbnail são preparadas sem base64 no banco.
+- Tesseract roda localmente, sugere dados e nunca bloqueia entrada manual.
+- RPCs transacionais definem recebimento, confirmação WhatsApp, retirada, reabertura e anonimização.
+- RLS cobre as 18 tabelas expostas e paths do Storage começam pelo condomínio.
+- O Postgres embutido executa migration + seed do zero.
+- Playwright cobre 360, 390, 768, 1024 e 1440 px.
 
-O projeto está **cloud-ready com fallback local**:
+## O que não foi confirmado
 
-- App Next.js funcional com base local-first sólida.
-- Prisma com **dois schemas** (SQLite local e PostgreSQL para Supabase).
-- `src/lib/storage.ts` decide entre `public/uploads` e Supabase Storage; suporta bucket público e privado (signed URL server-side).
-- Seed determinístico: condomínio demo, 5 blocos, 50 unidades, 120 moradores, 32 encomendas (9 PENDING / 11 NOTIFIED / 10 PICKED_UP / 2 CANCELLED, 3 atrasadas >24h), 65 eventos, 3 operadores.
-- Telefone seedado como `+55 11 953970704`.
-- Fluxo `/mobile/intake` com câmera direta, captura por arquivo, OCR experimental e autocomplete de moradores.
-- Upload de etiqueta local ou Supabase Storage conforme variáveis de ambiente.
-- `/mobile/pending` com busca, filtros e destaque para atrasadas.
-- `/mobile/package/[id]` com baixa de retirada, notificação via WhatsApp assistido e timeline.
-- `/admin` com KPIs, `/admin/packages`, `/admin/history`, `/admin/residents`, `/admin/import`, `/admin/settings`.
-- Importador CSV com `preview` e `commit` (Zod).
-- CI no GitHub Actions rodando **`prisma:validate` → `prisma:generate` → inicialização do SQLite → `prisma:push` → `prisma:seed` → `typecheck` → `build`**.
-- Páginas DB-backed marcadas como `force-dynamic` para refletir dados em tempo real e desacoplar o build do estado da seed.
-- `vercel.json` no root para deploy.
-- Documentação completa em `docs/MVP_SCOPE.md`, `docs/OFFLINE_FIRST_ARCHITECTURE.md`, `docs/PRODUCT_DECISIONS.md`, `docs/VALIDATION_PLAN.md`, `docs/BENCHMARK_NOTES.md`, `docs/IMPLEMENTATION_LOG.md`, `docs/implementation/CLOUD_READY_FOUNDATION.md`, `docs/implementation/SUPABASE_VERCEL_SETUP.md`, `docs/implementation/CAMERA_CAPTURE_CORE_FLOW.md`.
+O Supabase canônico não foi restaurado porque a organização excedeu o limite gratuito de projetos ativos. Logo, não foram confirmados schema remoto, Auth real, RLS real, Storage real, Edge Function, tipos gerados, workflow remoto, Hostinger ou produção.
 
-## Contexto essencial
+Não consigo confirmar isso.
 
-CondoLogPro é um **MVP de logística de encomendas condominiais**, não um app genérico de condomínio. A direção estratégica atual é **cloud-ready com fallback local** — Vercel + Supabase Postgres + Supabase Storage são o alvo; SQLite + `public/uploads` continuam sendo o modo de desenvolvimento e contingência.
+## Retomada mínima
 
-O fluxo real de referência continua:
-
-1. Portaria/administração recebe encomenda.
-2. Operador fotografa etiqueta.
-3. Operador confirma morador/unidade (autocomplete).
-4. Sistema registra encomenda.
-5. Sistema gera WhatsApp assistido (`wa.me`).
-6. Encomenda aparece em pendentes.
-7. Operador baixa retirada.
-8. Admin consulta registros, histórico e KPIs.
-
-## O que depende do usuário
-
-- Criar ou confirmar repositório GitHub remoto.
-- Criar projeto Supabase.
-- Criar bucket `package-labels` (público ou privado).
-- Configurar variáveis reais no Supabase/Vercel.
-- Conectar repo GitHub à Vercel.
-- Rodar comandos cloud documentados em `docs/implementation/SUPABASE_VERCEL_SETUP.md`.
-- Se o bucket for privado, decidir se a UI consome signed URL via endpoint dedicado (follow-up).
-- Testar câmera em aparelho físico via HTTPS. Em celular pela LAN HTTP, `getUserMedia` pode falhar e o fallback de upload/captura deve ser usado.
-
-## Atenção
-
-- **Não há credenciais Supabase reais neste ambiente.**
-- **Não afirmar validação cloud antes de testar com `DATABASE_URL`, `DIRECT_URL`, `SUPABASE_SERVICE_ROLE_KEY` e bucket reais.**
-- **Manter fallback local e manual.**
-- **Não expor a service role key ao cliente.** Toda chamada Supabase Storage e signed URL fica server-side (`src/lib/storage.ts`, `/api/*`).
-- **Não adicionar billing, WhatsApp Cloud API ou módulos genéricos antes do fluxo de encomendas estar validado em cloud.**
+1. Liberar slot/plano Supabase sem pausar outro projeto ativo por inferência.
+2. Restaurar `jbzpmeudvgrwodgqgozk`.
+3. Seguir `docs/rebuild/DEPLOYMENT.md` do passo de migration em diante.
+4. Só então declarar produção validada.

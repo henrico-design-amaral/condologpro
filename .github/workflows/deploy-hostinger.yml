@@ -2,49 +2,68 @@ name: Deploy CondoLogPro to Hostinger
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   workflow_dispatch:
 
 permissions:
   contents: read
 
-env:
-  HOSTINGER_HOST: 82.25.73.172
-  HOSTINGER_PORT: 65002
-  HOSTINGER_USER: u326975256
-  HOSTINGER_TARGET: /home/u326975256/domains/henrico.works/public_html/condologpro
-  HOSTINGER_SSH_PASSWORD: ${{ secrets.HOSTINGER_SSH_PASSWORD }}
+concurrency:
+  group: condologpro-production
+  cancel-in-progress: false
 
 jobs:
   deploy:
-    name: Build and deploy CondoLogPro
+    name: Validate, build and publish
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+    env:
+      PUBLIC_SUPABASE_URL: ${{ secrets.PUBLIC_SUPABASE_URL }}
+      PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+      HOSTINGER_HOST: ${{ secrets.HOSTINGER_HOST }}
+      HOSTINGER_USERNAME: ${{ secrets.HOSTINGER_USERNAME }}
+      HOSTINGER_PASSWORD: ${{ secrets.HOSTINGER_PASSWORD }}
+      HOSTINGER_PORT: ${{ secrets.HOSTINGER_PORT }}
+      HOSTINGER_TARGET_DIR: ${{ secrets.HOSTINGER_TARGET_DIR }}
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-
-      - run: npm install --no-audit --no-fund
-      - run: npm run check
-      - run: npm run build
-
-      - name: Deploy dist to Hostinger path
-        if: env.HOSTINGER_SSH_PASSWORD != ''
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ env.HOSTINGER_HOST }}
-          username: ${{ env.HOSTINGER_USER }}
-          password: ${{ env.HOSTINGER_SSH_PASSWORD }}
-          port: ${{ env.HOSTINGER_PORT }}
-          source: "dist/*"
-          target: ${{ env.HOSTINGER_TARGET }}
-          strip_components: 1
-          rm: true
-
-      - name: Report skipped deploy
-        if: env.HOSTINGER_SSH_PASSWORD == ''
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Require deployment configuration
+        shell: bash
         run: |
-          echo "HOSTINGER_SSH_PASSWORD secret is missing. Build passed, deploy skipped."
+          test -n "$PUBLIC_SUPABASE_URL"
+          test -n "$PUBLIC_SUPABASE_PUBLISHABLE_KEY"
+          test -n "$HOSTINGER_HOST"
+          test -n "$HOSTINGER_USERNAME"
+          test -n "$HOSTINGER_PASSWORD"
+          test -n "$HOSTINGER_PORT"
+          test -n "$HOSTINGER_TARGET_DIR"
+      - run: npm run quality
+      - name: Install browser runtime
+        run: npx playwright install --with-deps chromium
+      - name: Run isolated browser regressions
+        run: npm run test:e2e
+      - name: Build production bundle
+        run: npm run build
+      - name: Verify deploy artifact
+        shell: bash
+        run: test -f dist/index.html && test -d dist/_astro
+      - name: Install SFTP client
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq lftp
+      - name: Publish dist through SFTP
+        shell: bash
+        run: |
+          lftp -c "
+            set cmd:trace false;
+            set net:max-retries 2;
+            set net:timeout 20;
+            set sftp:auto-confirm yes;
+            open -u \"$HOSTINGER_USERNAME\",\"$HOSTINGER_PASSWORD\" sftp://$HOSTINGER_HOST:$HOSTINGER_PORT;
+            mirror --reverse --delete --verbose dist/ \"$HOSTINGER_TARGET_DIR\";
+            bye;
+          "

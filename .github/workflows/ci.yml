@@ -1,28 +1,41 @@
-name: CI
+name: CondoLogPro CI
 
 on:
-  push:
-    branches:
-      - main
-      - "feature/**"
-      - "fix/**"
   pull_request:
-    branches:
-      - main
+    branches: [main]
+  push:
+    branches: [main, "codex/**", "feature/**", "fix/**"]
 
 permissions:
   contents: read
 
+concurrency:
+  group: condologpro-ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  build:
-    name: Astro frontend validation
+  validate:
+    name: Quality, Postgres and browser gates
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
-      - run: npm install --no-audit --no-fund
-      - run: npm run check
-      - run: npm run build
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run quality
+      - name: Install browser runtime
+        run: npx playwright install --with-deps chromium
+      - name: Browser flows at five viewports
+        run: npm run test:e2e
+      - name: Upload browser evidence on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: condologpro-browser-evidence
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7

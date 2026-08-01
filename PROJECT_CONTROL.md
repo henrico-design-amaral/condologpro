@@ -2,58 +2,33 @@
 
 ## Estado atual
 
-Fase: **Cloud-ready MVP com fallback local**, em resolução de merge na branch `infra/supabase-vercel-camera-mvp`.
+Fase: reconstrução Astro + Supabase concluída localmente, integração remota bloqueada.
 
-Status: App Next.js com base local-first sólida + preparação cloud (Supabase Postgres + Supabase Storage + Vercel + CI no GitHub Actions). A branch preserva o fluxo câmera-first mobile intake, OCR opcional, autocomplete de moradores, WhatsApp assistido, pendentes, baixa de retirada, admin desktop conectado, importador CSV, dashboard com KPIs e histórico.
+Branch: `codex/rebuild-astro-supabase`, criada de `origin/main` (`8e8e14a`).
 
-## Caminho local
+Runtime: Astro 7 estático na Hostinger, ilha Preact autenticada e Supabase como única persistência planejada. Não há fallback SQLite no runtime.
 
-C:\Users\henri\Documents\04_PROJETOS_CONTEÚDO\01_ACTIVE\CondoLogPro
+## Fonte canônica
 
-## Objetivo do projeto
+- Código: este repositório, `origin/main`.
+- Produto: `/goal` de 2026-08-01, `PRODUCT.md` e `docs/rebuild`.
+- Banco: migration versionada em `supabase/migrations`.
+- Domínio: `https://condologpro.henrico.works`.
 
-Criar um **MVP cloud-ready de gestão de encomendas condominiais**, validável em condomínio real, implantável em Supabase/Vercel e que **preserva desenvolvimento e piloto local** via fallback SQLite + `public/uploads`.
+## Evidência local
 
-## Fluxo-base
+- migration + seed executados em Postgres embutido limpo;
+- 41 blocos, 1.394 unidades, 120 moradores sintéticos e segundo condomínio de isolamento;
+- 37 testes unitários/contratuais locais na última execução completa antes do relatório;
+- Playwright validou câmera permitida/negada, OCR real, fallback manual, WhatsApp, retirada e negativa administrativa;
+- lint, TypeScript, Astro check e build passam.
 
-Portaria/administração recebe pacote > fotografa etiqueta > registra entrada > associa bloco/apto/morador > gera WhatsApp assistido > acompanha pendentes > baixa retirada > admin consulta histórico e KPIs.
+## Bloqueio
 
-## Decisões técnicas
+O projeto Supabase canônico `jbzpmeudvgrwodgqgozk` está `INACTIVE`. Em 2026-08-01 a restauração retornou limite de dois projetos gratuitos ativos na organização. Nenhum outro projeto será pausado sem autorização específica.
 
-- Next.js App Router.
-- TypeScript strict.
-- Prisma com **dois schemas**:
-  - `prisma/schema.prisma` (SQLite) — local default.
-  - `prisma/schema.supabase.prisma` (PostgreSQL) — cloud.
-- Tailwind CSS.
-- Mobile para portaria (dark, large targets, câmera como ação principal).
-- Desktop para administração (light, denso, tabelas e KPIs).
-- Upload local (`public/uploads`) **e** Supabase Storage — `src/lib/storage.ts` decide por env.
-- Supabase Storage preparado com service role apenas no servidor e signed URL para bucket privado.
-- WhatsApp assistido via `wa.me`.
-- OCR experimental com `tesseract.js`, não bloqueante.
-- Vercel para hosting.
-- GitHub Actions para CI.
-- CI prepara SQLite com `prisma:push` + `prisma:seed` antes de `typecheck` e `build`.
-- Páginas que consultam Prisma são `force-dynamic`.
-- Documentação em `docs/` e `docs/implementation/`.
+Sem restaurar o projeto não é possível aplicar migration, gerar tipos remotos, criar usuários Auth, comprovar RLS/Storage real, configurar as variáveis GitHub nem executar o fluxo em produção.
 
-## Branch atual
+## Próximo passo mínimo
 
-`infra/supabase-vercel-camera-mvp`
-
-## Último marco
-
-- Preparação cloud/câmera: `feat: prepare cloud mvp with camera-first intake` (68af13b).
-- PR #6 em `main`: confiabilidade de CI/database build, incluindo SQLite preparado antes do build e páginas DB-backed dinâmicas.
-- Merge de `main` em `infra/supabase-vercel-camera-mvp` em resolução para preservar ambos os trabalhos.
-
-## Próxima etapa
-
-- Finalizar resolução de conflitos e validar PR #5.
-- Rodar validações locais completas.
-- Configurar projeto Supabase real (conta, bucket, envs).
-- Conectar repo GitHub na Vercel.
-- Validar deploy de preview com envs Supabase reais.
-- Smoke test cloud: registrar uma encomenda real, conferir upload no Storage, enviar WhatsApp assistido e baixar retirada.
-- Testar câmera em aparelho físico via HTTPS; telefone em LAN HTTP pode depender do fallback de upload/captura.
+Liberar um slot Supabase ou atualizar o plano da organização; em seguida executar `docs/rebuild/DEPLOYMENT.md` a partir do gate de migration.
