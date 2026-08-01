@@ -4,13 +4,13 @@ on:
   pull_request:
     branches: [main]
   push:
-    branches: [main, "codex/**", "feature/**", "fix/**"]
+    branches: [main, 'codex/**', 'feature/**', 'fix/**']
 
 permissions:
   contents: read
 
 concurrency:
-  group: condologpro-ci-${{ github.ref }}
+  group: condologpro-ci-${{ github.event.pull_request.head.sha || github.sha }}
   cancel-in-progress: true
 
 jobs:
@@ -19,8 +19,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: npm
