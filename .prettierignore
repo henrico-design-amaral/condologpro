@@ -1,0 +1,11 @@
+dist
+node_modules
+coverage
+playwright-report
+test-results
+package-lock.json
+src/lib/database.types.ts
+supabase/config.toml
+supabase/migrations/*.sql
+supabase/seed.sql
+docs/legacy/**

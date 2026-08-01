@@ -1,22 +1,26 @@
 {
   "extends": "astro/tsconfigs/strict",
   "compilerOptions": {
-    "baseUrl": ".",
+    "jsx": "react-jsx",
+    "jsxImportSource": "preact",
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
     "paths": {
       "@/*": ["./src/*"]
     }
   },
   "include": [
+    ".astro/types.d.ts",
     "src/**/*.astro",
     "src/**/*.ts",
-    "astro.config.mjs"
+    "src/**/*.tsx",
+    "tests/**/*.ts",
+    "tests/**/*.tsx",
+    "scripts/**/*.ts",
+    "astro.config.mjs",
+    "eslint.config.js",
+    "vitest.config.ts",
+    "playwright.config.ts"
   ],
-  "exclude": [
-    "node_modules",
-    "src/app",
-    "src/components",
-    "prisma",
-    ".next",
-    "dist"
-  ]
+  "exclude": ["node_modules", ".next", "dist", "playwright-report", "test-results"]
 }

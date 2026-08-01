@@ -1,37 +1,34 @@
-export function formatDateTime(date: Date | null | undefined, fallback = "Não registrado") {
-  if (!date) {
-    return fallback;
-  }
+import type { PackageStatus } from '../types/domain';
 
-  return new Intl.DateTimeFormat("pt-BR", {
-    dateStyle: "short",
-    timeStyle: "short"
-  }).format(date);
+export const statusLabels: Record<PackageStatus, string> = {
+  awaiting_identification: 'Aguardando identificação',
+  awaiting_notification: 'Aguardando notificação',
+  awaiting_pickup: 'Aguardando retirada',
+  picked_up: 'Retirada concluída',
+  returned: 'Devolvida',
+  cancelled: 'Cancelada',
+  problem: 'Com problema'
+};
+
+export function formatDateTime(value: string | null): string {
+  if (!value) return '—';
+  return new Intl.DateTimeFormat('pt-BR', {
+    dateStyle: 'short',
+    timeStyle: 'short',
+    timeZone: 'America/Sao_Paulo'
+  }).format(new Date(value));
 }
 
-export function formatDate(date: Date | null | undefined, fallback = "Não registrado") {
-  if (!date) {
-    return fallback;
-  }
-
-  return new Intl.DateTimeFormat("pt-BR", {
-    dateStyle: "short"
-  }).format(date);
+export function digits(value: string): string {
+  return value.replace(/\D/g, '');
 }
 
-export function formatRelativeHours(date: Date) {
-  const diffMs = Date.now() - date.getTime();
-  const hours = diffMs / (60 * 60 * 1000);
+export function phoneLast4(value: string | null | undefined): string | null {
+  const normalized = digits(value ?? '');
+  return normalized.length >= 4 ? normalized.slice(-4) : null;
+}
 
-  if (hours < 1) {
-    const minutes = Math.max(Math.round(diffMs / (60 * 1000)), 0);
-    return `${minutes} min`;
-  }
-
-  if (hours < 48) {
-    return `${Math.round(hours)} h`;
-  }
-
-  const days = Math.round(hours / 24);
-  return `${days} dias`;
+export function maskPhone(value: string | null | undefined): string {
+  const last4 = phoneLast4(value);
+  return last4 ? `•••• ${last4}` : 'Telefone não informado';
 }

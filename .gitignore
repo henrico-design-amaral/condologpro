@@ -9,6 +9,7 @@ out/
 # production
 build/
 dist/
+.astro/
 
 # env
 .env

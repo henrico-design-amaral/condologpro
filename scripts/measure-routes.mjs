@@ -1,13 +1,13 @@
-const baseUrl = process.env.MEASURE_BASE_URL ?? "http://localhost:3000";
-const samples = Number(process.env.MEASURE_SAMPLES ?? "3");
+const baseUrl = process.env.MEASURE_BASE_URL ?? 'http://localhost:3000';
+const samples = Number(process.env.MEASURE_SAMPLES ?? '3');
 const routes = [
-  "/",
-  "/admin",
-  "/admin/packages",
-  "/admin/residents",
-  "/mobile",
-  "/mobile/intake",
-  "/mobile/pending"
+  '/',
+  '/admin',
+  '/admin/packages',
+  '/admin/residents',
+  '/mobile',
+  '/mobile/intake',
+  '/mobile/pending'
 ];
 
 function percentile(values, percent) {
@@ -24,7 +24,7 @@ for (const route of routes) {
     const startedAt = performance.now();
     const response = await fetch(`${baseUrl}${route}`, {
       headers: {
-        "User-Agent": "condologpro-route-measure"
+        'User-Agent': 'condologpro-route-measure'
       }
     });
     const body = await response.arrayBuffer();
@@ -40,6 +40,6 @@ for (const route of routes) {
 
   const average = Math.round(timings.reduce((total, value) => total + value, 0) / timings.length);
   console.log(
-    `${route} status=${statuses.join(",")} ms=${timings.join(",")} avg=${average} p95=${percentile(timings, 95)}`
+    `${route} status=${statuses.join(',')} ms=${timings.join(',')} avg=${average} p95=${percentile(timings, 95)}`
   );
 }

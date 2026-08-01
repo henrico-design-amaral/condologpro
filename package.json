@@ -1,19 +1,66 @@
 {
   "name": "condologpro",
-  "version": "0.2.0",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "CondoLogPro — Astro front-end reconstruction for condominium package operations.",
+  "description": "CondoLogPro: operação auditável de encomendas para condomínios.",
   "scripts": {
-    "dev": "astro dev",
+    "dev": "astro dev --host 0.0.0.0",
     "build": "astro build",
     "preview": "astro preview",
-    "check": "astro check"
+    "check": "astro check",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "format": "prettier --check \"src/**/*.{ts,tsx,astro,css}\" \"tests/**/*.{ts,tsx}\" \"scripts/**/*.{ts,mjs}\" \"*.{json,js,mjs,ts}\"",
+    "format:write": "prettier --write \"src/**/*.{ts,tsx,astro,css}\" \"tests/**/*.{ts,tsx}\" \"scripts/**/*.{ts,mjs}\" \"*.{json,js,mjs,ts}\"",
+    "test": "vitest run",
+    "test:unit": "vitest run tests/unit",
+    "test:db": "vitest run tests/database",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "supabase:start": "npx supabase@latest start",
+    "supabase:stop": "npx supabase@latest stop",
+    "supabase:reset": "npx supabase@latest db reset",
+    "supabase:status": "npx supabase@latest status",
+    "supabase:seed:users": "tsx scripts/seed-supabase-users.ts",
+    "supabase:validate:security": "tsx scripts/validate-supabase-security.ts",
+    "supabase:validate:flow": "tsx scripts/validate-operational-flow.ts",
+    "legacy:audit": "node scripts/audit-legacy-sqlite.mjs prisma/dev.db",
+    "security": "npm audit --omit=dev",
+    "quality": "npm run format && npm run lint && npm run typecheck && npm run test && npm run check && npm run build && npm run security"
   },
   "dependencies": {
-    "astro": "^5.0.6"
+    "@astrojs/preact": "^6.0.2",
+    "@fontsource-variable/inter": "^5.3.0",
+    "@fontsource-variable/syne": "^5.3.0",
+    "@supabase/supabase-js": "^2.111.0",
+    "astro": "^7.1.6",
+    "lucide-preact": "^1.28.0",
+    "preact": "^10.29.8",
+    "tesseract.js": "^7.0.0",
+    "zod": "^4.4.3"
   },
   "engines": {
-    "node": ">=18.17.1"
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "@axe-core/playwright": "^4.12.1",
+    "@electric-sql/pglite": "^0.5.4",
+    "@eslint/js": "^9.39.5",
+    "@playwright/test": "^1.62.1",
+    "@testing-library/jest-dom": "^7.0.0",
+    "@testing-library/preact": "^3.2.4",
+    "@types/node": "^26.1.2",
+    "dotenv": "^17.4.2",
+    "eslint": "^9.39.5",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "jsdom": "^30.0.1",
+    "prettier": "^3.9.6",
+    "prettier-plugin-astro": "^0.14.1",
+    "tsx": "^4.23.1",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.65.0",
+    "vitest": "^4.1.10"
   }
 }
