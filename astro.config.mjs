@@ -1,7 +1,8 @@
 import { defineConfig } from 'astro/config';
 
 export default defineConfig({
-  site: 'https://condologpro.henrico.works',
+  site: 'https://henrico-design-amaral.github.io',
+  base: '/condologpro',
   compressHTML: true,
   build: {
     assets: '_assets'
