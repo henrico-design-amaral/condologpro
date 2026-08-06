@@ -1,9 +1,6 @@
 name: Deploy CondoLogPro to Hostinger
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
 
 permissions:
@@ -26,8 +23,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
 
-      - run: npm install --no-audit --no-fund
+      - run: npm ci --no-audit --no-fund
       - run: npm run check
       - run: npm run build
 
@@ -46,5 +44,4 @@ jobs:
 
       - name: Report skipped deploy
         if: env.HOSTINGER_SSH_PASSWORD == ''
-        run: |
-          echo "HOSTINGER_SSH_PASSWORD secret is missing. Build passed, deploy skipped."
+        run: echo "HOSTINGER_SSH_PASSWORD secret is missing. Build passed, deploy skipped."
