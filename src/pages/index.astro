@@ -1,98 +1,218 @@
 ---
 import '../styles/condologpro.css';
+
+const flow = [
+  ['01', 'Fotografe', 'A portaria registra a etiqueta pelo celular, sem depender de caderno ou planilha.'],
+  ['02', 'Identifique', 'O sistema ajuda a localizar bloco, apartamento e morador, sempre com revisão humana.'],
+  ['03', 'Avise', 'A comunicação fica pronta para envio, sem mensagens improvisadas ou moradores esquecidos.'],
+  ['04', 'Entregue', 'A retirada é confirmada com horário, responsável e histórico consultável.']
+];
+
+const audiences = [
+  ['Portaria', 'Menos busca manual, menos papel e uma rotina que continua funcionando mesmo quando a etiqueta está ruim.'],
+  ['Síndico', 'Visibilidade sobre pendências, retiradas e ocorrências sem depender da memória de ninguém.'],
+  ['Administradora', 'Um processo replicável, auditável e mais fácil de acompanhar entre diferentes condomínios.'],
+  ['Morador', 'Avisos mais rápidos e menos desencontro na hora de buscar uma encomenda.']
+];
+
+const faq = [
+  ['O CondoLogPro substitui o WhatsApp?', 'Não necessariamente. Ele organiza o recebimento e prepara a comunicação, permitindo manter um canal familiar sem perder o controle do processo.'],
+  ['E se a etiqueta não for reconhecida?', 'A operação continua. O porteiro pode revisar, corrigir ou preencher os dados manualmente. A automação ajuda, mas nunca bloqueia.'],
+  ['Funciona no celular da portaria?', 'Sim. O fluxo de entrada foi desenhado para câmera mobile, alvos grandes e uso rápido durante a rotina real.'],
+  ['É possível consultar o histórico?', 'Sim. Cada pacote mantém uma linha do tempo com entrada, associação, aviso e retirada.']
+];
 ---
 
 <html lang="pt-BR">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="CondoLogPro — sistema operacional para portaria, encomendas, moradores, SLA e evidência." />
-    <title>CondoLogPro — Operational Signal</title>
+    <meta name="description" content="CondoLogPro organiza o recebimento, a notificação e a retirada de encomendas em condomínios." />
+    <meta name="theme-color" content="#11100f" />
+    <title>CondoLogPro — Encomendas sob controle</title>
   </head>
   <body>
+    <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
     <div class="scroll-progress" aria-hidden="true"><span></span></div>
+
     <header class="header" data-header>
       <div class="shell header-inner">
-        <a class="brand" href="#top">condolog<i>pro</i></a>
+        <a class="brand" href="#top" aria-label="CondoLogPro, início">condolog<i>pro</i></a>
         <nav class="nav" aria-label="Navegação principal">
-          <a href="#fluxo">fluxo</a><a href="#telas">telas</a><a href="#admin">admin</a><a href="#evidencia">evidência</a>
+          <a href="#como-funciona">Como funciona</a>
+          <a href="#beneficios">Benefícios</a>
+          <a href="#seguranca">Segurança</a>
+          <a class="nav-cta" href="#demonstracao">Agendar demonstração</a>
         </nav>
       </div>
     </header>
 
-    <main id="top">
-      <section class="hero section">
-        <div class="shell grid">
-          <div class="reveal">
-            <p class="kicker">CondoLogPro / Operational Signal</p>
-            <h1>Every package has a place. Every action has evidence.</h1>
-            <p class="lead">Front-end completo para a rotina real da portaria: receber, capturar, identificar, associar, notificar, acompanhar SLA e baixar retirada com evidência.</p>
-            <div class="actions"><a class="button primary" href="#fluxo">ver fluxo ↓</a><a class="button warning" href="#telas">ver telas ↘</a></div>
-          </div>
-          <aside class="panel reveal reveal-delay">
-            <div class="topline"><span>portaria mobile</span><span>active flow</span></div>
-            <div class="phone">
-              <div class="phone-top"><span>nova entrada</span><span>09:41</span></div>
-              <div class="scan"><span></span></div>
-              <div class="form-stack"><div class="field">tracking · BPX71A8BR</div><div class="field">unidade · bloco 12 / apto 1203</div><div class="field">morador · Ana Beatriz</div></div>
-              <div class="phone-cta">registrar evidência →</div>
+    <main id="conteudo">
+      <section class="hero section" id="top">
+        <div class="shell hero-grid">
+          <div class="hero-copy reveal">
+            <p class="kicker">Gestão de encomendas para condomínios</p>
+            <h1>Encomendas sob controle. Do recebimento à retirada.</h1>
+            <p class="lead">Fotografe a etiqueta, identifique o morador, prepare o aviso e registre a entrega em um único fluxo — direto do celular da portaria.</p>
+            <div class="actions">
+              <a class="button primary" href="#demonstracao">Quero uma demonstração <span aria-hidden="true">→</span></a>
+              <a class="button secondary" href="#como-funciona">Ver como funciona <span aria-hidden="true">↓</span></a>
             </div>
-            <div class="bottomline"><span>teal = avança</span><span>amber = atenção</span></div>
+            <ul class="trust-list" aria-label="Principais vantagens">
+              <li>Sem depender de papel</li>
+              <li>Automação com correção humana</li>
+              <li>Histórico auditável</li>
+            </ul>
+          </div>
+
+          <aside class="product-stage reveal reveal-delay" aria-label="Demonstração visual do fluxo de recebimento">
+            <div class="stage-label"><span>Portaria mobile</span><span class="live-dot">Fluxo ativo</span></div>
+            <div class="device">
+              <div class="device-top"><strong>Nova encomenda</strong><span>09:41</span></div>
+              <div class="camera-frame"><span class="scan-line"></span><small>Etiqueta detectada</small></div>
+              <div class="recognition-card"><span>Morador encontrado</span><strong>Ana Beatriz · Bloco 12 · 1203</strong></div>
+              <div class="timeline-mini"><span class="done">Recebida</span><span class="done">Identificada</span><span>Notificar</span></div>
+              <div class="device-action">Confirmar entrada <span aria-hidden="true">→</span></div>
+            </div>
+            <div class="stage-note">A tecnologia acelera. A decisão continua sendo humana.</div>
           </aside>
         </div>
       </section>
 
-      <section class="section" id="fluxo">
-        <div class="shell section-head reveal"><p>/ 01 — fluxo</p><i></i><span>receber → identificar → associar → notificar → retirar</span></div>
-        <div class="shell flow">
-          <div class="flow-step reveal"><span>01</span><h3>Receber</h3><p>A portaria cria entrada com mínimo atrito e foco em captura rápida.</p></div>
-          <div class="flow-step reveal"><span>02</span><h3>Identificar</h3><p>Código, transportadora e tipo do pacote ficam legíveis antes da associação.</p></div>
-          <div class="flow-step reveal"><span>03</span><h3>Associar</h3><p>Unidade, bloco, apartamento e morador são ligados ao registro.</p></div>
-          <div class="flow-step reveal"><span>04</span><h3>Notificar</h3><p>Mensagem assistida reduz retrabalho e mantém rastro operacional.</p></div>
-          <div class="flow-step reveal"><span>05</span><h3>Baixar</h3><p>A retirada encerra o ciclo com evidência, horário e responsável.</p></div>
+      <section class="problem section">
+        <div class="shell problem-grid">
+          <div class="section-copy reveal">
+            <p class="kicker">O problema não é receber</p>
+            <h2>É saber exatamente o que aconteceu depois.</h2>
+          </div>
+          <div class="problem-list reveal reveal-delay">
+            <p>Papel se perde.</p>
+            <p>Planilha fica desatualizada.</p>
+            <p>Mensagem no WhatsApp some.</p>
+            <p>A memória falha.</p>
+            <strong>Quando algo dá errado, ninguém deveria precisar reconstruir a história.</strong>
+          </div>
         </div>
       </section>
 
-      <section class="section" id="telas">
-        <div class="shell section-head reveal"><p>/ 02 — telas</p><i></i><span>mobile portaria · desktop administração</span></div>
-        <div class="shell screens">
-          <article class="screen reveal"><span class="meta">screen 01</span><h3>Dashboard da portaria</h3><p>Hoje, pendentes, SLA, retiradas e entradas recentes em uma leitura curta.</p><div class="mock"><div class="row"><b>38</b><span>pacotes ativos</span></div><div class="row"><b>07</b><span>atenção SLA</span></div><div class="row"><b>12</b><span>retiradas hoje</span></div></div></article>
-          <article class="screen reveal"><span class="meta">screen 02</span><h3>Captura / scan</h3><p>Frame visual, upload alternativo e fallback manual para etiqueta ilegível.</p><div class="mock"><span class="chip">camera ready</span><span class="chip warn">fallback manual</span></div></article>
-          <article class="screen reveal"><span class="meta">screen 03</span><h3>Associação</h3><p>Busca por bloco, unidade e morador com confirmação antes de notificar.</p><div class="mock"><div class="row"><b>Bloco 12</b><span>Apto 1203</span></div><div class="row"><b>Ana Beatriz</b><span>moradora</span></div></div></article>
-          <article class="screen reveal"><span class="meta">screen 04</span><h3>Lista de pacotes</h3><p>Filtros por pendente, aguardando retirada, SLA, entregue e bloqueado.</p><div class="mock"><div class="row"><b>BPX71A8</b><span>aguardando</span></div><div class="row"><b>PLM93K2</b><span>SLA 02:15</span></div></div></article>
-          <article class="screen reveal"><span class="meta">screen 05</span><h3>Retirada</h3><p>Confirmação clara com morador, documento, foto opcional e assinatura.</p><div class="mock"><span class="chip">confirmar retirada</span></div></article>
-          <article class="screen reveal"><span class="meta">screen 06</span><h3>Evidência</h3><p>Linha do tempo do pacote com foto, aviso, alterações e baixa final.</p><div class="mock"><div class="row"><b>09:41</b><span>recebido</span></div><div class="row"><b>09:44</b><span>notificado</span></div><div class="row"><b>14:20</b><span>retirado</span></div></div></article>
+      <section class="section" id="como-funciona">
+        <div class="shell section-head reveal"><p>/ Como funciona</p><i></i><span>Um fluxo simples para uma operação que nunca foi simples</span></div>
+        <div class="shell flow-grid">
+          {flow.map(([number, title, text]) => (
+            <article class="flow-step reveal">
+              <span>{number}</span>
+              <h3>{title}</h3>
+              <p>{text}</p>
+            </article>
+          ))}
         </div>
       </section>
 
-      <section class="section" id="admin">
-        <div class="shell section-head reveal"><p>/ 03 — admin</p><i></i><span>visão operacional para gestão</span></div>
-        <div class="shell dashboard">
-          <div class="dash-card reveal"><p class="eyebrow">admin desktop</p><h2>Prioridade por sinal, não por volume.</h2><p class="lead">A administração enxerga fila, gargalos, SLA e histórico sem depender de planilhas ou conversas soltas.</p></div>
-          <div class="dash-card reveal reveal-delay"><div class="metrics"><div><strong>38</strong><span>ativos</span></div><div><strong>07</strong><span>SLA</span></div><div><strong>12</strong><span>retiradas</span></div><div><strong>94%</strong><span>rastro</span></div></div></div>
+      <section class="section product-proof" id="beneficios">
+        <div class="shell proof-grid">
+          <div class="dashboard-card reveal">
+            <div class="dashboard-top"><span>Painel operacional</span><span>Hoje · tempo real</span></div>
+            <div class="metrics">
+              <div><strong>38</strong><span>encomendas ativas</span></div>
+              <div><strong>07</strong><span>exigem atenção</span></div>
+              <div><strong>12</strong><span>retiradas hoje</span></div>
+            </div>
+            <div class="package-list">
+              <div><b>BPX71A8BR</b><span>Ana Beatriz · aguardando retirada</span><em>Notificada</em></div>
+              <div><b>PLM93K2BR</b><span>Carlos Mendes · bloco 8</span><em class="attention">Atenção</em></div>
+              <div><b>QTR18N4BR</b><span>Marina Souza · retirada concluída</span><em>Entregue</em></div>
+            </div>
+          </div>
+          <div class="section-copy reveal reveal-delay">
+            <p class="kicker">Visibilidade operacional</p>
+            <h2>Veja o que exige atenção. Não apenas o que existe.</h2>
+            <p class="lead">O painel transforma uma lista de volumes em uma visão clara de pendências, avisos, retiradas e ocorrências.</p>
+          </div>
         </div>
       </section>
 
-      <section class="section" id="evidencia">
-        <div class="shell section-head reveal"><p>/ 04 — regra</p><i></i><span>teal avança · amber exige atenção</span></div>
-        <div class="shell flow">
-          <div class="flow-step reveal"><span>teal</span><h3>Progresso</h3><p>Usado para ações que movem o pacote até a conclusão.</p></div>
-          <div class="flow-step reveal"><span>amber</span><h3>Atenção</h3><p>Usado para pendência, tempo, SLA e ação humana necessária.</p></div>
-          <div class="flow-step reveal"><span>red</span><h3>Bloqueio</h3><p>Reservado para erro, conflito ou impedimento real.</p></div>
-          <div class="flow-step reveal"><span>silver</span><h3>Leitura</h3><p>Neutros sustentam densidade, texto e hierarquia.</p></div>
-          <div class="flow-step reveal"><span>gold</span><h3>Confiança</h3><p>Ouro aparece só em marcação estratégica e validação.</p></div>
+      <section class="section">
+        <div class="shell section-head reveal"><p>/ Valor para todos</p><i></i><span>Uma operação melhor percebida por toda a cadeia</span></div>
+        <div class="shell audience-grid">
+          {audiences.map(([title, text]) => (
+            <article class="audience-card reveal"><h3>{title}</h3><p>{text}</p></article>
+          ))}
+        </div>
+      </section>
+
+      <section class="section safety" id="seguranca">
+        <div class="shell safety-grid">
+          <div class="section-copy reveal">
+            <p class="kicker">Automação sem armadilha</p>
+            <h2>O sistema ajuda. A portaria mantém o controle.</h2>
+            <p class="lead">Etiqueta amassada, informação incompleta ou morador não encontrado não podem paralisar a operação.</p>
+          </div>
+          <div class="safety-points reveal reveal-delay">
+            <div><span>01</span><p>Todo reconhecimento pode ser revisado antes da confirmação.</p></div>
+            <div><span>02</span><p>Todo campo pode ser corrigido manualmente.</p></div>
+            <div><span>03</span><p>Todo pacote mantém um histórico de ações e responsáveis.</p></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section evidence">
+        <div class="shell evidence-grid">
+          <div class="section-copy reveal">
+            <p class="kicker">Rastreabilidade</p>
+            <h2>Cada encomenda conta uma história.</h2>
+          </div>
+          <ol class="timeline reveal reveal-delay">
+            <li><time>09:41</time><div><strong>Entrada registrada</strong><span>Foto da etiqueta anexada</span></div></li>
+            <li><time>09:43</time><div><strong>Morador associado</strong><span>Ana Beatriz · Bloco 12 · 1203</span></div></li>
+            <li><time>09:44</time><div><strong>Aviso preparado</strong><span>Comunicação revisada pela portaria</span></div></li>
+            <li><time>14:20</time><div><strong>Retirada concluída</strong><span>Entrega registrada por Marcos Silva</span></div></li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="section faq-section">
+        <div class="shell faq-grid">
+          <div class="section-copy reveal"><p class="kicker">Perguntas frequentes</p><h2>O que precisa estar claro antes de começar.</h2></div>
+          <div class="faq-list reveal reveal-delay">
+            {faq.map(([question, answer]) => (
+              <details><summary>{question}<span aria-hidden="true">+</span></summary><p>{answer}</p></details>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section class="section cta-section" id="demonstracao">
+        <div class="shell cta-card reveal">
+          <p class="kicker">Demonstração orientada à sua realidade</p>
+          <h2>Sua portaria já recebe encomendas todos os dias.</h2>
+          <p>A decisão agora é continuar improvisando ou começar a controlar.</p>
+          <a class="button primary large" href="mailto:contato@henrico.works?subject=Quero conhecer o CondoLogPro">Quero conhecer o CondoLogPro <span aria-hidden="true">→</span></a>
+          <small>Sem apresentação genérica. Primeiro entendemos como sua portaria opera hoje.</small>
         </div>
       </section>
     </main>
 
+    <footer class="footer"><div class="shell"><a class="brand" href="#top">condolog<i>pro</i></a><p>Menos improviso na portaria. Mais controle para o condomínio.</p></div></footer>
+
     <script is:inline>
       document.documentElement.classList.add('js-enabled');
-      const header=document.querySelector('[data-header]');const progress=document.querySelector('.scroll-progress span');
-      const update=()=>{header?.classList.toggle('is-scrolled',scrollY>20);const max=document.documentElement.scrollHeight-innerHeight;if(progress)progress.style.transform=`scaleX(${max>0?scrollY/max:0})`};
-      addEventListener('scroll',update,{passive:true});update();
-      const observer=new IntersectionObserver((entries)=>entries.forEach((entry)=>{if(entry.isIntersecting){entry.target.classList.add('is-visible');observer.unobserve(entry.target)}}),{threshold:.12});
-      document.querySelectorAll('.reveal').forEach((el)=>observer.observe(el));
-      if(matchMedia('(prefers-reduced-motion: reduce)').matches)document.documentElement.classList.add('reduce-motion');
+      const header = document.querySelector('[data-header]');
+      const progress = document.querySelector('.scroll-progress span');
+      const update = () => {
+        header?.classList.toggle('is-scrolled', scrollY > 20);
+        const max = document.documentElement.scrollHeight - innerHeight;
+        if (progress) progress.style.transform = `scaleX(${max > 0 ? scrollY / max : 0})`;
+      };
+      addEventListener('scroll', update, { passive: true });
+      update();
+      if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        const observer = new IntersectionObserver((entries) => entries.forEach((entry) => {
+          if (entry.isIntersecting) { entry.target.classList.add('is-visible'); observer.unobserve(entry.target); }
+        }), { threshold: .12 });
+        document.querySelectorAll('.reveal').forEach((el) => observer.observe(el));
+      } else {
+        document.querySelectorAll('.reveal').forEach((el) => el.classList.add('is-visible'));
+      }
     </script>
   </body>
 </html>
