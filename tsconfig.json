@@ -8,7 +8,6 @@
   },
   "include": [
     "src/**/*.astro",
-    "src/**/*.ts",
     "astro.config.mjs"
   ],
   "exclude": [
