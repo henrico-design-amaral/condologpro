@@ -15,6 +15,7 @@ O repositório atual é marketing-only. O produto operacional deve ser recuperad
 - reconciliação dos documentos de autoridade deste repositório.
 - criação do repositório privado `henrico-design-amaral/condologpro-app` com `main@a136054`;
 - início de `codex/phase-2-clean-recovery`, com instalação, Prisma, seed, testes, typecheck, build e smoke anônimo aprovados.
+- CI do app aprovado, incluindo replay completo das migrations em PostgreSQL descartável.
 
 ## Evidência de infraestrutura
 
@@ -34,4 +35,4 @@ O repositório atual é marketing-only. O produto operacional deve ser recuperad
 
 ## Próximo passo mínimo
 
-Resolver as vulnerabilidades do app por upgrade controlado e validar o ledger Prisma em PostgreSQL descartável, sem deploy.
+Resolver as vulnerabilidades do app por upgrade controlado e reconciliar SQL/RLS do PR #17 com testes de tenancy, sem deploy.

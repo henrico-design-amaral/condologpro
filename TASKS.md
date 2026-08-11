@@ -22,7 +22,7 @@
 - [x] Remover apenas resíduos meta não necessários, preservados em `main`.
 - [x] Executar `npm ci` e registrar versões reais.
 - [x] Validar Prisma local e cloud sem banco remoto.
-- [ ] Preparar PostgreSQL descartável para migration deploy/status.
+- [x] Preparar PostgreSQL descartável no CI e aprovar migration deploy/status.
 - [x] Rodar typecheck, testes, build e servidor local.
 - [ ] Executar smoke autenticado para login, mobile intake, pendentes, retirada e admin; o smoke anônimo já passou.
 - [ ] Reimplementar capacidades aprovadas do PR #17 em lotes pequenos.

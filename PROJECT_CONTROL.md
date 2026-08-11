@@ -44,6 +44,6 @@ O híbrido sujo de `codex/rebuild-astro-supabase@4f131eb` foi preservado antes d
 
 1. validar e publicar esta reconciliação documental em PR isolado;
 2. manter `condologpro-app/main` como anchor de recuperação;
-3. resolver vulnerabilidades e validar migrations PostgreSQL em banco descartável na branch técnica;
+3. resolver vulnerabilidades e reconciliar SQL/RLS do PR #17 sobre o ledger PostgreSQL já validado no CI;
 4. configurar Auth apenas em ambiente isolado e repetir o smoke autenticado;
 5. não fazer deploy de produção.
