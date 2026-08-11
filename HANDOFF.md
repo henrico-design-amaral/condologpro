@@ -1,62 +1,37 @@
 # HANDOFF — CondoLogPro
 
-## Último estado conhecido
+## Decisão objetiva
 
-Branch atual: `infra/supabase-vercel-camera-mvp`.
+O repositório atual é marketing-only. O produto operacional deve ser recuperado em `henrico-design-amaral/condologpro-app` a partir de `a136054`, incorporando capacidades do PR #17 de forma seletiva.
 
-Esta branch está resolvendo o merge de `main` após PR #6. O estado final deve preservar:
+## Concluído na Phase 1
 
-- PR #6: CI prepara SQLite antes de `typecheck`/`build`, roda `prisma:push` e `prisma:seed`, páginas DB-backed são `force-dynamic`, docs cloud-ready atualizados.
-- Branch atual: câmera-first mobile intake, Supabase/Vercel setup, storage abstraction, OCR opcional, autocomplete, criação de pacote e WhatsApp success flow.
+- refresh de Git e confirmação de `origin/main@9ec8071`;
+- preservação do híbrido `4f131eb` em `fe328a8` e bundle externo;
+- scan de segredos, PII e artefatos gerados nos 31 caminhos preservados;
+- matriz de proveniência e ADR de separação;
+- definição de uma autoridade de migrations;
+- inventário Supabase somente leitura;
+- reconciliação dos documentos de autoridade deste repositório.
+- criação do repositório privado `henrico-design-amaral/condologpro-app` com `main@a136054`;
+- início de `codex/phase-2-clean-recovery`, com instalação, Prisma, seed, testes, typecheck, build e smoke anônimo aprovados.
 
-O projeto está **cloud-ready com fallback local**:
+## Evidência de infraestrutura
 
-- App Next.js funcional com base local-first sólida.
-- Prisma com **dois schemas** (SQLite local e PostgreSQL para Supabase).
-- `src/lib/storage.ts` decide entre `public/uploads` e Supabase Storage; suporta bucket público e privado (signed URL server-side).
-- Seed determinístico: condomínio demo, 5 blocos, 50 unidades, 120 moradores, 32 encomendas (9 PENDING / 11 NOTIFIED / 10 PICKED_UP / 2 CANCELLED, 3 atrasadas >24h), 65 eventos, 3 operadores.
-- Telefone seedado como `+55 11 953970704`.
-- Fluxo `/mobile/intake` com câmera direta, captura por arquivo, OCR experimental e autocomplete de moradores.
-- Upload de etiqueta local ou Supabase Storage conforme variáveis de ambiente.
-- `/mobile/pending` com busca, filtros e destaque para atrasadas.
-- `/mobile/package/[id]` com baixa de retirada, notificação via WhatsApp assistido e timeline.
-- `/admin` com KPIs, `/admin/packages`, `/admin/history`, `/admin/residents`, `/admin/import`, `/admin/settings`.
-- Importador CSV com `preview` e `commit` (Zod).
-- CI no GitHub Actions rodando **`prisma:validate` → `prisma:generate` → inicialização do SQLite → `prisma:push` → `prisma:seed` → `typecheck` → `build`**.
-- Páginas DB-backed marcadas como `force-dynamic` para refletir dados em tempo real e desacoplar o build do estado da seed.
-- `vercel.json` no root para deploy.
-- Documentação completa em `docs/MVP_SCOPE.md`, `docs/OFFLINE_FIRST_ARCHITECTURE.md`, `docs/PRODUCT_DECISIONS.md`, `docs/VALIDATION_PLAN.md`, `docs/BENCHMARK_NOTES.md`, `docs/IMPLEMENTATION_LOG.md`, `docs/implementation/CLOUD_READY_FOUNDATION.md`, `docs/implementation/SUPABASE_VERCEL_SETUP.md`, `docs/implementation/CAMERA_CAPTURE_CORE_FLOW.md`.
+- Supabase `ricnsldmlnisleklmmch`, `sa-east-1`, PostgreSQL 17.6, status `INACTIVE`.
+- A Edge Function `admin-invite-user`, versão 2, aparece como `ACTIVE` e `verify_jwt=true`.
+- Listagem de migrations e tabelas falhou por timeout de conexão enquanto o projeto está inativo.
+- Advisors retornaram sem lints, mas isso não prova o schema porque o banco não respondeu às leituras principais.
+- Hostinger está configurado no Codex local, porém os comandos do conector não foram carregados nesta sessão. Não consigo confirmar inventário de planos, sites ou suporte do app sem nova sessão/conector disponível.
 
-## Contexto essencial
+## Não executar ainda
 
-CondoLogPro é um **MVP de logística de encomendas condominiais**, não um app genérico de condomínio. A direção estratégica atual é **cloud-ready com fallback local** — Vercel + Supabase Postgres + Supabase Storage são o alvo; SQLite + `public/uploads` continuam sendo o modo de desenvolvimento e contingência.
+- não restaurar ou substituir o Supabase;
+- não aplicar migrations remotas;
+- não publicar o app;
+- não fechar PR #17, PR #13 ou branches antigas antes do registro final de destino;
+- não remover o Next.js dormente da landing no mesmo lote documental.
 
-O fluxo real de referência continua:
+## Próximo passo mínimo
 
-1. Portaria/administração recebe encomenda.
-2. Operador fotografa etiqueta.
-3. Operador confirma morador/unidade (autocomplete).
-4. Sistema registra encomenda.
-5. Sistema gera WhatsApp assistido (`wa.me`).
-6. Encomenda aparece em pendentes.
-7. Operador baixa retirada.
-8. Admin consulta registros, histórico e KPIs.
-
-## O que depende do usuário
-
-- Criar ou confirmar repositório GitHub remoto.
-- Criar projeto Supabase.
-- Criar bucket `package-labels` (público ou privado).
-- Configurar variáveis reais no Supabase/Vercel.
-- Conectar repo GitHub à Vercel.
-- Rodar comandos cloud documentados em `docs/implementation/SUPABASE_VERCEL_SETUP.md`.
-- Se o bucket for privado, decidir se a UI consome signed URL via endpoint dedicado (follow-up).
-- Testar câmera em aparelho físico via HTTPS. Em celular pela LAN HTTP, `getUserMedia` pode falhar e o fallback de upload/captura deve ser usado.
-
-## Atenção
-
-- **Não há credenciais Supabase reais neste ambiente.**
-- **Não afirmar validação cloud antes de testar com `DATABASE_URL`, `DIRECT_URL`, `SUPABASE_SERVICE_ROLE_KEY` e bucket reais.**
-- **Manter fallback local e manual.**
-- **Não expor a service role key ao cliente.** Toda chamada Supabase Storage e signed URL fica server-side (`src/lib/storage.ts`, `/api/*`).
-- **Não adicionar billing, WhatsApp Cloud API ou módulos genéricos antes do fluxo de encomendas estar validado em cloud.**
+Resolver as vulnerabilidades do app por upgrade controlado e validar o ledger Prisma em PostgreSQL descartável, sem deploy.
