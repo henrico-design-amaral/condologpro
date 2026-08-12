@@ -1,35 +1,17 @@
-﻿# LOCAL SETUP — CondoLogPro
+# Setup local — marketing
 
-## Ambiente alvo
+Pré-requisitos: Node.js compatível com `package.json` e npm.
 
-Windows local, executando via terminal do Antigravity ou PowerShell.
+```powershell
+npm ci
+npm run dev
+```
 
-## Ferramentas esperadas
+Validação antes de qualquer publicação:
 
-- Git
-- GitHub CLI
-- Node.js
-- npm
-- VS Code / Antigravity
-- Claude Code
+```powershell
+npm run check
+npm run build
+```
 
-## Caminho do projeto
-
-C:\Users\henri\Documents\04_PROJETOS_CONTEÚDO\01_ACTIVE\CondoLogPro
-
-## Como abrir
-
-Comando:
-
-    cd "C:\Users\henri\Documents\04_PROJETOS_CONTEÚDO\01_ACTIVE\CondoLogPro"
-
-## Como verificar status
-
-Comandos:
-
-    git status -sb
-    git branch --show-current
-
-## Observação
-
-Este projeto começa como MVP local-first. O app ainda não deve ser iniciado antes da conclusão do PDR e dos prompts Claude Code.
+O output é estático. Nenhuma variável de banco, Supabase ou aplicação operacional é necessária para construir a landing. Se uma alteração passar a exigir essas variáveis, ela violou a separação de arquitetura.

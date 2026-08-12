@@ -2,58 +2,48 @@
 
 ## Estado atual
 
-Fase: **Cloud-ready MVP com fallback local**, em resolução de merge na branch `infra/supabase-vercel-camera-mvp`.
+Fase: **Phase 1 — Architecture Reconciliation**.
 
-Status: App Next.js com base local-first sólida + preparação cloud (Supabase Postgres + Supabase Storage + Vercel + CI no GitHub Actions). A branch preserva o fluxo câmera-first mobile intake, OCR opcional, autocomplete de moradores, WhatsApp assistido, pendentes, baixa de retirada, admin desktop conectado, importador CSV, dashboard com KPIs e histórico.
+Status: superfícies separadas e repositório operacional criado. Este repositório é marketing Astro; `henrico-design-amaral/condologpro-app` é privado, possui `main@a136054` e iniciou a recuperação em `codex/phase-2-clean-recovery`.
 
-## Caminho local
+## Autoridade por superfície
 
-C:\Users\henri\Documents\04_PROJETOS_CONTEÚDO\01_ACTIVE\CondoLogPro
+| Superfície | Autoridade | Domínio | Runtime |
+| --- | --- | --- | --- |
+| Marketing | `henrico-design-amaral/condologpro` | `condologpro.henrico.works` | Astro estático |
+| Operacional | `henrico-design-amaral/condologpro-app` | `app.condologpro.henrico.works` | Next.js + TypeScript, Node.js |
 
-## Objetivo do projeto
+O domínio operacional só pode ser considerado ativo depois de build, ambiente, HTTPS e smoke test reais. Não consigo confirmar isso no estado atual.
 
-Criar um **MVP cloud-ready de gestão de encomendas condominiais**, validável em condomínio real, implantável em Supabase/Vercel e que **preserva desenvolvimento e piloto local** via fallback SQLite + `public/uploads`.
+## Decisões de recuperação
 
-## Fluxo-base
+- `origin/main@9ec8071` é a autoridade atual da landing.
+- `a136054` é o anchor de recuperação operacional, não uma aprovação automática de todo o seu conteúdo.
+- PR #17 (`codex/rebuild-astro-supabase`) é fonte seletiva de modelo de domínio, SQL/RLS, migrations, testes, camera/OCR, drafts, idempotência, fallbacks e QA.
+- O runtime Astro operacional do PR #17 não será integrado ao app.
+- Prisma Migrate será o único ledger executável de migrations do app. SQL útil do PR #17 será incorporado, revisado e versionado dentro desse ledger.
+- O projeto Supabase candidato é `ricnsldmlnisleklmmch`, região `sa-east-1`, atualmente `INACTIVE`. Nenhum projeto substituto será criado sem concluir a investigação.
+- Hosting do app permanece em decisão baseada em evidência; não há deploy autorizado nesta fase.
 
-Portaria/administração recebe pacote > fotografa etiqueta > registra entrada > associa bloco/apto/morador > gera WhatsApp assistido > acompanha pendentes > baixa retirada > admin consulta histórico e KPIs.
+## Preservação
 
-## Decisões técnicas
+O híbrido sujo de `codex/rebuild-astro-supabase@4f131eb` foi preservado antes de qualquer limpeza:
 
-- Next.js App Router.
-- TypeScript strict.
-- Prisma com **dois schemas**:
-  - `prisma/schema.prisma` (SQLite) — local default.
-  - `prisma/schema.supabase.prisma` (PostgreSQL) — cloud.
-- Tailwind CSS.
-- Mobile para portaria (dark, large targets, câmera como ação principal).
-- Desktop para administração (light, denso, tabelas e KPIs).
-- Upload local (`public/uploads`) **e** Supabase Storage — `src/lib/storage.ts` decide por env.
-- Supabase Storage preparado com service role apenas no servidor e signed URL para bucket privado.
-- WhatsApp assistido via `wa.me`.
-- OCR experimental com `tesseract.js`, não bloqueante.
-- Vercel para hosting.
-- GitHub Actions para CI.
-- CI prepara SQLite com `prisma:push` + `prisma:seed` antes de `typecheck` e `build`.
-- Páginas que consultam Prisma são `force-dynamic`.
-- Documentação em `docs/` e `docs/implementation/`.
+- branch local: `preservation/phase1-hybrid-20260810`;
+- commit: `fe328a8fa6fd333a62bc20160f21d66bc7be40dc`;
+- bundle externo e inventário: `_RECOVERY/CondoLogPro/2026-08-10-phase1` fora da árvore ativa;
+- prova: 31 arquivos conferidos por hash, sem divergência.
 
-## Branch atual
+## Resíduos conhecidos neste repositório
 
-`infra/supabase-vercel-camera-mvp`
+- Arquivos Next.js e documentação histórica ainda coexistem em `main`.
+- `package.json` define Astro como runtime efetivo.
+- A limpeza será um lote posterior, depois de o app separado estar rastreável e o build da landing ser determinístico.
 
-## Último marco
+## Próximo gate
 
-- Preparação cloud/câmera: `feat: prepare cloud mvp with camera-first intake` (68af13b).
-- PR #6 em `main`: confiabilidade de CI/database build, incluindo SQLite preparado antes do build e páginas DB-backed dinâmicas.
-- Merge de `main` em `infra/supabase-vercel-camera-mvp` em resolução para preservar ambos os trabalhos.
-
-## Próxima etapa
-
-- Finalizar resolução de conflitos e validar PR #5.
-- Rodar validações locais completas.
-- Configurar projeto Supabase real (conta, bucket, envs).
-- Conectar repo GitHub na Vercel.
-- Validar deploy de preview com envs Supabase reais.
-- Smoke test cloud: registrar uma encomenda real, conferir upload no Storage, enviar WhatsApp assistido e baixar retirada.
-- Testar câmera em aparelho físico via HTTPS; telefone em LAN HTTP pode depender do fallback de upload/captura.
+1. validar e publicar esta reconciliação documental em PR isolado;
+2. manter `condologpro-app/main` como anchor de recuperação;
+3. resolver vulnerabilidades e reconciliar SQL/RLS do PR #17 sobre o ledger PostgreSQL já validado no CI;
+4. configurar Auth apenas em ambiente isolado e repetir o smoke autenticado;
+5. não fazer deploy de produção.

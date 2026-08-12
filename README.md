@@ -1,33 +1,34 @@
-﻿# CondoLogPro
+# CondoLogPro — site comercial
 
-Sistema local-first para gestão de encomendas condominiais.
+Este repositório é a autoridade da superfície pública de marketing do CondoLogPro.
 
-## Objetivo
+## Limite de responsabilidade
 
-Criar um MVP funcional para teste real em condomínio, com foco inicial no fluxo operacional da portaria:
+- Repositório: `henrico-design-amaral/condologpro`
+- Domínio: `https://condologpro.henrico.works`
+- Runtime: Astro estático
+- Responsabilidade: proposta de valor, demonstração visual, conversão e acesso ao produto
+- Não contém a aplicação operacional autoritativa nem é fonte de verdade de banco, autenticação ou migrations
 
-1. Portaria/administração recebe pacote.
-2. Fotografa a etiqueta.
-3. Sistema cria entrada da encomenda.
-4. Sistema associa a unidade, bloco, apartamento e morador.
-5. Sistema gera mensagem de WhatsApp para avisar o morador.
-6. Na retirada, a portaria baixa o pacote com registro digital.
+A aplicação operacional vive em `henrico-design-amaral/condologpro-app` e terá como domínio canônico `https://app.condologpro.henrico.works` quando houver ambiente validado. Até essa validação, nenhum texto deste site deve afirmar que o app está disponível em produção.
 
-## Contexto real de uso
+## Desenvolvimento local
 
-O projeto nasce a partir de um fluxo manual observado em condomínio residencial de grande porte, onde a administração recebe encomendas, registra dados em caderno físico, envia aviso manual por WhatsApp e coleta assinatura no momento da retirada.
+```powershell
+npm ci
+npm run check
+npm run build
+```
 
-## Primeira versão
+O gate de publicação exige instalação determinística, `check`, `build`, inspeção do artefato estático e smoke test HTTPS no domínio público.
 
-A primeira versão deve ser local-first e funcionar como protótipo operacional dentro do condomínio.
+## Estado legado
 
-- Portaria: uso mobile.
-- Administração: uso desktop.
-- Banco local: SQLite.
-- Upload de fotos: armazenamento local.
-- WhatsApp: envio assistido via link/mensagem pronta.
-- OCR: desejável, mas sempre com fallback manual.
+Arquivos Next.js ainda presentes na árvore de `main` são resíduo histórico, não runtime alternativo. Eles só podem ser removidos em lote próprio depois de:
 
-## Princípio central
+1. preservar a proveniência;
+2. confirmar o link do repositório operacional;
+3. validar o build Astro sem dependência desses arquivos;
+4. revisar o diff de remoção.
 
-Não mudar a rotina da portaria. Digitalizar o que já funciona manualmente.
+Consulte [PROJECT_CONTROL.md](PROJECT_CONTROL.md), [DECISIONS.md](DECISIONS.md) e [docs/architecture/PHASE_1_PROVENANCE_MATRIX.md](docs/architecture/PHASE_1_PROVENANCE_MATRIX.md).

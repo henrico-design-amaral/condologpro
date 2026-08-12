@@ -1,61 +1,22 @@
-﻿# AGENTS — CondoLogPro
+# AGENTS — CondoLogPro marketing
 
-## Purpose
+## Autoridade
 
-This file defines the agent roles for Claude Code implementation.
+Este repositório governa somente a landing comercial Astro do CondoLogPro. Código operacional Next.js, autenticação, dados, migrations e fluxos de portaria pertencem ao repositório `henrico-design-amaral/condologpro-app`.
 
-## 1. product-architect
+## Regras
 
-Responsible for preserving product strategy, operational scope and MVP discipline.
+- Proteger a separação entre marketing e produto operacional.
+- Não reintroduzir runtime operacional neste repositório.
+- Não publicar sem `npm ci`, `npm run check`, `npm run build` e smoke HTTPS.
+- Não afirmar disponibilidade, segurança ou desempenho do app sem evidência atual.
+- Tratar os arquivos Next.js remanescentes como resíduo preservado até a limpeza dedicada.
+- Manter escopo comercial; billing, novos módulos e redesign amplo continuam fora do escopo.
 
-Focus:
-- avoid feature creep;
-- protect the condominium package workflow;
-- ensure local-first MVP remains testable in a real condominium.
+## Papéis úteis
 
-## 2. fullstack-implementer
+- `product-architect`: preserva posicionamento e escopo vendável.
+- `marketing-implementer`: mantém Astro, conteúdo, SEO e CTA para o app.
+- `qa-reviewer`: valida build estático, links, acessibilidade e HTTPS.
 
-Responsible for building the Next.js application.
-
-Focus:
-- routes;
-- components;
-- Prisma schema;
-- API handlers;
-- forms;
-- CRUD;
-- local upload.
-
-## 3. mobile-ux-specialist
-
-Responsible for the front desk mobile flow.
-
-Focus:
-- package intake speed;
-- camera/photo upload;
-- large touch targets;
-- minimal typing;
-- clear pending package list.
-
-## 4. admin-dashboard-specialist
-
-Responsible for the desktop admin experience.
-
-Focus:
-- resident database;
-- package records;
-- search/filter;
-- import/export;
-- operational dashboard.
-
-## 5. qa-reviewer
-
-Responsible for testing flows and identifying breakages.
-
-Focus:
-- mobile registration;
-- desktop admin;
-- WhatsApp assisted link;
-- package pickup;
-- seed data;
-- local run instructions.
+As funções operacionais de portaria, administração e banco são revisadas no repositório do app.
