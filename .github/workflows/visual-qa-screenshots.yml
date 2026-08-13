@@ -54,25 +54,35 @@ jobs:
           const fs = require('fs');
 
           async function capture(browser, name, viewport) {
-            const page = await browser.newPage({ viewportSize: viewport, deviceScaleFactor: 1 });
+            const page = await browser.newPage({ viewport, deviceScaleFactor: 1 });
             const errors = [];
             page.on('console', msg => {
               if (msg.type() === 'error') errors.push(`console: ${msg.text()}`);
             });
             page.on('pageerror', error => errors.push(`pageerror: ${error.message}`));
-            await page.goto('http://127.0.0.1:4173/', { waitUntil: 'networkidle' });
+            const target = 'http://127.0.0.1:4173/';
+            await page.goto(target, { waitUntil: 'networkidle' });
             await page.screenshot({ path: `visual-qa/${name}.png`, fullPage: true });
             const layout = await page.evaluate(() => ({
+              href: location.href,
+              pathname: location.pathname,
               width: innerWidth,
               scrollWidth: document.documentElement.scrollWidth,
               height: innerHeight,
               scrollHeight: document.documentElement.scrollHeight,
               title: document.title
             }));
-            const result = { name, viewport, layout, overflowX: layout.scrollWidth > layout.width, errors };
+            const result = {
+              name,
+              viewport,
+              layout,
+              redirected: layout.pathname !== '/',
+              overflowX: layout.scrollWidth > layout.width,
+              errors
+            };
             fs.writeFileSync(`visual-qa/${name}.json`, JSON.stringify(result, null, 2));
             console.log(JSON.stringify(result));
-            if (result.overflowX || errors.length) process.exitCode = 1;
+            if (result.redirected || result.overflowX || errors.length) process.exitCode = 1;
             await page.close();
           }
 
