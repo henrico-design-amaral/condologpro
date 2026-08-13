@@ -1,0 +1,45 @@
+name: Finalize mobile hero fix
+
+on:
+  push:
+    branches:
+      - design/landing-visual-structure-v1
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: design/landing-visual-structure-v1
+
+      - name: Normalize to verified mobile override
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('src/styles/condologpro.css')
+          source = path.read_text()
+          marker = '/* Mobile hero clipping fix — visual QA 390px */'
+          if marker not in source:
+              raise SystemExit('experimental mobile hero block not found')
+          source = source.split(marker, 1)[0].rstrip()
+          verified = '''\n\n/* Mobile hero legibility fix — verified at 390px */\n@media(max-width:420px){\n  .hero-copy h1{max-width:100%;font-size:clamp(2.7rem,12.6vw,3.9rem);letter-spacing:-.06em}\n  .hero-copy .kicker{max-width:32ch;font-size:.66rem;line-height:1.55}\n}\n'''
+          path.write_text(source + verified)
+          PY
+          git diff --check
+          git diff -- src/styles/condologpro.css
+
+      - name: Commit normalized product state and remove workflow
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/finalize-mobile-hero.yml
+          git add src/styles/condologpro.css
+          git diff --cached --check
+          git commit -m "fix(landing): preserve mobile hero legibility"
+          git push origin HEAD:design/landing-visual-structure-v1
