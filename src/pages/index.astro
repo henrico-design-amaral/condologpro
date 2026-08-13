@@ -29,25 +29,17 @@ const faq = [
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content="CondoLogPro organiza recebimento, identificação, aviso e retirada de encomendas em condomínios." />
-    <link rel="canonical" href="https://henrico-design-amaral.github.io/condologpro/" />
-    <meta name="theme-color" content="#0b1014" />
+    <link rel="canonical" href="https://condologpro.henrico.works/" />
+    <meta name="theme-color" content="#050608" />
     <meta property="og:locale" content="pt_BR" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="CondoLogPro" />
     <meta property="og:title" content="CondoLogPro — Controle operacional de encomendas" />
     <meta property="og:description" content="Receba, identifique, avise e registre a retirada de encomendas em um único fluxo para portarias e condomínios." />
-    <meta property="og:url" content="https://henrico-design-amaral.github.io/condologpro/" />
-    <meta property="og:image" content="https://henrico-design-amaral.github.io/condologpro/assets/condologpro-og.jpg" />
-    <meta property="og:image:secure_url" content="https://henrico-design-amaral.github.io/condologpro/assets/condologpro-og.jpg" />
-    <meta property="og:image:type" content="image/jpeg" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="CondoLogPro — gestão operacional de encomendas para portarias e condomínios" />
-    <meta name="twitter:card" content="summary_large_image" />
+    <meta property="og:url" content="https://condologpro.henrico.works/" />
+    <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content="CondoLogPro — Controle operacional de encomendas" />
     <meta name="twitter:description" content="Receba, identifique, avise e registre a retirada de encomendas em um único fluxo para portarias e condomínios." />
-    <meta name="twitter:image" content="https://henrico-design-amaral.github.io/condologpro/assets/condologpro-og.jpg" />
-    <meta name="twitter:image:alt" content="CondoLogPro — gestão operacional de encomendas para portarias e condomínios" />
     <title>CondoLogPro — Controle operacional para encomendas</title>
   </head>
   <body>
@@ -58,8 +50,8 @@ const faq = [
       <div class="shell header-inner">
         <a class="brand" href="#top" aria-label="CondoLogPro, início">condolog<i>pro</i></a>
         <nav class="nav" aria-label="Navegação principal">
+          <a href="#produto">Produto</a>
           <a href="#como-funciona">Como funciona</a>
-          <a href="#beneficios">Benefícios</a>
           <a href="#seguranca">Segurança</a>
           <a class="nav-cta" href="#demonstracao">Agendar demonstração</a>
         </nav>
@@ -68,24 +60,25 @@ const faq = [
 
     <main id="conteudo">
       <section class="hero section" id="top">
+        <div class="hero-orbit" aria-hidden="true"></div>
         <div class="shell hero-grid">
           <div class="hero-copy reveal">
-            <p class="kicker">Gestão de encomendas · fluxo operacional</p>
+            <p class="kicker">Portaria mobile · painel operacional · histórico auditável</p>
             <h1>Encomendas sob controle. Do recebimento à retirada.</h1>
-            <p class="lead">Fotografe a etiqueta, identifique o morador, prepare o aviso e registre a entrega em um único fluxo — direto do celular da portaria.</p>
+            <p class="lead">Fotografe a etiqueta, identifique o morador, prepare o aviso e registre a entrega em um único fluxo — direto do celular da portaria e com visão operacional para quem precisa acompanhar.</p>
             <div class="actions">
               <a class="button primary" href="#demonstracao">Quero uma demonstração <span aria-hidden="true">→</span></a>
-              <a class="button secondary" href="#como-funciona">Ver como funciona <span aria-hidden="true">↓</span></a>
+              <a class="button secondary" href="#produto">Ver o produto <span aria-hidden="true">↓</span></a>
             </div>
-            <ul class="trust-list" aria-label="Principais vantagens">
+            <ul class="trust-list" aria-label="Princípios do produto">
               <li>Sem depender de papel</li>
               <li>Automação com correção humana</li>
-              <li>Histórico auditável</li>
+              <li>Histórico consultável</li>
             </ul>
           </div>
 
           <aside class="product-stage reveal reveal-delay" aria-label="Demonstração visual do fluxo de recebimento">
-            <div class="stage-label"><span>Portaria mobile</span><span class="live-dot">Fluxo ativo</span></div>
+            <div class="stage-label"><span>Interface demonstrativa</span><span class="live-dot">Fluxo ativo</span></div>
             <div class="device">
               <div class="device-top"><strong>Nova encomenda</strong><span>09:41</span></div>
               <div class="camera-frame"><span class="scan-line"></span><small>Etiqueta detectada</small></div>
@@ -93,8 +86,23 @@ const faq = [
               <div class="timeline-mini"><span class="done">Recebida</span><span class="done">Identificada</span><span>Notificar</span></div>
               <div class="device-action">Confirmar entrada <span aria-hidden="true">→</span></div>
             </div>
+            <div class="floating-event" aria-hidden="true">
+              <span>09:44</span>
+              <strong>Aviso preparado</strong>
+              <small>Pronto para revisão da portaria</small>
+            </div>
             <div class="stage-note">A tecnologia acelera. A decisão continua sendo humana.</div>
           </aside>
+        </div>
+
+        <div class="shell operational-loop reveal" aria-label="Fluxo operacional resumido">
+          <div class="loop-label"><span>/ Fluxo operacional</span><strong>Uma única linha do tempo</strong></div>
+          <ol>
+            <li><span>01</span><strong>Recebida</strong><small>foto + horário</small></li>
+            <li><span>02</span><strong>Identificada</strong><small>unidade + morador</small></li>
+            <li><span>03</span><strong>Notificada</strong><small>aviso revisado</small></li>
+            <li><span>04</span><strong>Retirada</strong><small>responsável + registro</small></li>
+          </ol>
         </div>
       </section>
 
@@ -127,26 +135,70 @@ const faq = [
         </div>
       </section>
 
-      <section class="section product-proof" id="beneficios">
+      <section class="section product-proof" id="produto">
         <div class="shell proof-grid">
           <div class="dashboard-card reveal">
-            <div class="dashboard-top"><span>Painel operacional</span><span>Hoje · tempo real</span></div>
-            <div class="metrics">
-              <div><strong>38</strong><span>encomendas ativas</span></div>
-              <div><strong>07</strong><span>exigem atenção</span></div>
-              <div><strong>12</strong><span>retiradas hoje</span></div>
-            </div>
-            <div class="package-list">
-              <div><b>BPX71A8BR</b><span>Ana Beatriz · aguardando retirada</span><em>Notificada</em></div>
-              <div><b>PLM93K2BR</b><span>Carlos Mendes · bloco 8</span><em class="attention">Atenção</em></div>
-              <div><b>QTR18N4BR</b><span>Marina Souza · retirada concluída</span><em>Entregue</em></div>
+            <div class="dashboard-top"><span>Painel operacional</span><span class="demo-badge">Dados ilustrativos</span></div>
+            <div class="dashboard-shell">
+              <div class="dashboard-rail" aria-hidden="true">
+                <span class="rail-mark">clp</span>
+                <i class="active"></i><i></i><i></i><i></i>
+              </div>
+              <div class="dashboard-main">
+                <div class="metrics">
+                  <div><strong>38</strong><span>encomendas ativas</span></div>
+                  <div><strong>07</strong><span>exigem atenção</span></div>
+                  <div><strong>12</strong><span>retiradas hoje</span></div>
+                </div>
+                <div class="package-list">
+                  <div><b>BPX71A8BR</b><span>Ana Beatriz · aguardando retirada</span><em>Notificada</em></div>
+                  <div><b>PLM93K2BR</b><span>Carlos Mendes · bloco 8</span><em class="attention">Atenção</em></div>
+                  <div><b>QTR18N4BR</b><span>Marina Souza · retirada concluída</span><em>Entregue</em></div>
+                </div>
+              </div>
             </div>
           </div>
           <div class="section-copy reveal reveal-delay">
             <p class="kicker">Visibilidade operacional</p>
             <h2>Veja o que exige atenção. Não apenas o que existe.</h2>
-            <p class="lead">O painel transforma uma lista de volumes em uma visão clara de pendências, avisos, retiradas e ocorrências.</p>
+            <p class="lead">O painel transforma uma lista de volumes em uma visão clara de pendências, avisos, retiradas e ocorrências — sem transformar a portaria em operadora de sistema.</p>
+            <div class="proof-note"><span>01</span><p>Fila de trabalho legível para a portaria.</p></div>
+            <div class="proof-note"><span>02</span><p>Estados operacionais claros para síndico e administradora.</p></div>
           </div>
+        </div>
+      </section>
+
+      <section class="section surfaces-section">
+        <div class="shell section-head reveal"><p>/ Duas superfícies</p><i></i><span>Entrada rápida na portaria, visão ampla na administração</span></div>
+        <div class="shell surface-grid">
+          <article class="surface-card surface-mobile reveal">
+            <div class="surface-copy">
+              <span>01 · Mobile intake</span>
+              <h3>Feito para entrar no fluxo da portaria.</h3>
+              <p>Câmera primeiro, campos grandes e revisão humana quando o reconhecimento não for suficiente.</p>
+            </div>
+            <div class="mini-phone" aria-label="Simulação da tela mobile de nova encomenda">
+              <div class="mini-phone-top"><span>Nova encomenda</span><i></i></div>
+              <div class="mini-camera"><b>Etiqueta</b><small>enquadre para identificar</small></div>
+              <div class="mini-field"><small>Morador</small><strong>Ana Beatriz</strong></div>
+              <div class="mini-field muted"><small>Unidade</small><strong>Bloco 12 · 1203</strong></div>
+              <div class="mini-confirm">Revisar e confirmar</div>
+            </div>
+          </article>
+
+          <article class="surface-card surface-admin reveal reveal-delay">
+            <div class="surface-copy">
+              <span>02 · Operação</span>
+              <h3>Feito para descobrir o que precisa de ação.</h3>
+              <p>Uma camada de acompanhamento para pendências, avisos, retiradas e histórico operacional.</p>
+            </div>
+            <div class="mini-board" aria-label="Simulação do painel operacional">
+              <div class="mini-board-top"><span>Fila de encomendas</span><small>hoje</small></div>
+              <div class="mini-row"><i class="ok"></i><strong>Ana Beatriz</strong><span>Notificada</span></div>
+              <div class="mini-row"><i class="warn"></i><strong>Carlos Mendes</strong><span>Revisar unidade</span></div>
+              <div class="mini-row"><i class="done"></i><strong>Marina Souza</strong><span>Entregue</span></div>
+            </div>
+          </article>
         </div>
       </section>
 
@@ -179,6 +231,7 @@ const faq = [
           <div class="section-copy reveal">
             <p class="kicker">Rastreabilidade</p>
             <h2>Cada encomenda conta uma história.</h2>
+            <p class="lead">Não é só saber que o pacote existe. É conseguir entender quem registrou, quando foi associado, quando o aviso ficou pronto e como a retirada terminou.</p>
           </div>
           <ol class="timeline reveal reveal-delay">
             <li><time>09:41</time><div><strong>Entrada registrada</strong><span>Foto da etiqueta anexada</span></div></li>
