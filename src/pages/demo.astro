@@ -1,0 +1,202 @@
+---
+import '../styles/demo.css';
+---
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="robots" content="noindex,nofollow" />
+    <meta name="theme-color" content="#071014" />
+    <title>Demo operacional — CondoLogPro</title>
+  </head>
+  <body>
+    <header class="demo-header">
+      <div class="demo-shell demo-header-inner">
+        <a class="demo-brand" href="/">condolog<span>pro</span></a>
+        <a class="demo-back" href="/">← Voltar à apresentação</a>
+      </div>
+    </header>
+
+    <main class="demo-main">
+      <div class="demo-shell">
+        <section class="demo-hero">
+          <div>
+            <p class="demo-kicker">Demo funcional · sem dados reais</p>
+            <h1>Veja a operação acontecer em poucos passos.</h1>
+            <p>Esta demonstração simula o fluxo de portaria e o reflexo imediato no painel administrativo. Nenhuma informação é enviada ou persistida fora do navegador.</p>
+          </div>
+          <div class="demo-mode" aria-label="Modo da demonstração">
+            <button type="button" aria-pressed="true" data-mode="both">Fluxo completo</button>
+            <button type="button" aria-pressed="false" data-mode="portaria">Portaria</button>
+            <button type="button" aria-pressed="false" data-mode="admin">Admin</button>
+          </div>
+        </section>
+
+        <section class="demo-stage" data-stage>
+          <article class="demo-phone" data-surface="portaria" aria-label="Simulação da portaria mobile">
+            <div class="demo-phone-head"><b>Portaria mobile</b><span class="demo-status teal" data-mobile-status>Recebendo</span></div>
+            <div class="demo-phone-body">
+              <div class="demo-step active" data-step="0">
+                <div class="demo-label-frame"><div class="demo-box"></div><span class="scan" aria-hidden="true"></span></div>
+                <h2>1. Fotografe a etiqueta</h2>
+                <p>A câmera ajuda a capturar os dados. A operação continua mesmo se a leitura não for perfeita.</p>
+                <div class="demo-actions"><button type="button" class="primary" data-next>Ler etiqueta</button></div>
+              </div>
+
+              <div class="demo-step" data-step="1">
+                <p class="demo-kicker">Reconhecimento assistido</p>
+                <h2>2. Revise o que foi reconhecido</h2>
+                <div class="demo-suggestion"><strong>CLP-9X7B-22</strong><span>Código · confiança alta</span></div>
+                <div class="demo-suggestion"><strong>Log Express</strong><span>Transportadora · confiança média</span></div>
+                <div class="demo-suggestion"><strong>Apto 1203</strong><span>Unidade provável · confirmar antes de salvar</span></div>
+                <div class="demo-actions"><button type="button" data-prev>Voltar</button><button type="button" class="primary" data-next>Confirmar leitura</button></div>
+              </div>
+
+              <div class="demo-step" data-step="2">
+                <p class="demo-kicker">Associação</p>
+                <h2>3. Confirme o morador</h2>
+                <p>Escolha a pessoa certa antes de criar a entrada.</p>
+                <div class="demo-residents">
+                  <button type="button" class="demo-resident selected" data-resident="Ana Beatriz"><strong>Ana Beatriz Silva</strong><small>Bloco 12 · Apto 1203</small></button>
+                  <button type="button" class="demo-resident" data-resident="Carlos Oliveira"><strong>Carlos Oliveira</strong><small>Bloco 12 · Apto 1204</small></button>
+                </div>
+                <div class="demo-actions"><button type="button" data-prev>Voltar</button><button type="button" class="primary" data-next>Criar entrada</button></div>
+              </div>
+
+              <div class="demo-step" data-step="3">
+                <p class="demo-kicker">Comunicação assistida</p>
+                <h2>4. O aviso fica pronto para revisão</h2>
+                <div class="demo-suggestion"><strong data-message>Olá, Ana Beatriz. Sua encomenda foi recebida na portaria.</strong><span>A pessoa revisa e decide quando enviar.</span></div>
+                <div class="demo-actions"><button type="button" data-prev>Voltar</button><button type="button" class="amber" data-notify>Marcar como avisado</button></div>
+              </div>
+
+              <div class="demo-step" data-step="4">
+                <p class="demo-kicker">Retirada</p>
+                <h2>5. Registre quem retirou</h2>
+                <p>A entrega só termina quando o estado final fica registrado.</p>
+                <div class="demo-suggestion"><strong data-picked-by>Ana Beatriz Silva</strong><span>Retirada simulada · agora</span></div>
+                <div class="demo-actions"><button type="button" data-prev>Voltar</button><button type="button" class="primary" data-pickup>Confirmar retirada</button></div>
+              </div>
+
+              <div class="demo-step" data-step="5">
+                <p class="demo-kicker">Concluído</p>
+                <h2>Fluxo fechado com histórico.</h2>
+                <p>Entrada, associação, aviso e retirada permanecem visíveis como uma única história operacional.</p>
+                <div class="demo-actions"><button type="button" data-reset>Reiniciar demonstração</button></div>
+              </div>
+            </div>
+          </article>
+
+          <article class="demo-admin" data-surface="admin" aria-label="Simulação da administração desktop">
+            <div class="demo-admin-head"><b>Painel administrativo</b><span class="demo-status teal">Tempo real</span></div>
+            <div class="demo-admin-body">
+              <div class="demo-metrics">
+                <div class="demo-metric"><strong data-active-count>38</strong><span>ativas</span></div>
+                <div class="demo-metric"><strong data-pending-count>07</strong><span>pendentes</span></div>
+                <div class="demo-metric"><strong data-notified-count>12</strong><span>avisadas hoje</span></div>
+                <div class="demo-metric"><strong data-picked-count>15</strong><span>retiradas hoje</span></div>
+              </div>
+              <div class="demo-table">
+                <div class="demo-row head"><span>Pacote</span><span>Morador</span><span>Unidade</span><span>Status</span></div>
+                <div data-demo-row class="demo-empty">A nova entrada aparecerá aqui quando você concluir a associação na portaria.</div>
+                <div class="demo-row"><b>BPX71A8BR</b><span>Marina Souza</span><span>Bloco 07 · 702</span><span class="demo-status green">Entregue</span></div>
+                <div class="demo-row"><b>PLM93K2BR</b><span>Carlos Mendes</span><span>Bloco 08 · 804</span><span class="demo-status amber">Atenção</span></div>
+              </div>
+              <div class="demo-note">Demo deliberadamente transparente: OCR e associação são assistivos, o WhatsApp não é enviado automaticamente e nenhuma ação é persistida fora desta sessão.</div>
+            </div>
+          </article>
+        </section>
+      </div>
+    </main>
+
+    <div class="demo-toast" role="status" aria-live="polite" data-toast></div>
+
+    <script is:inline>
+      const steps = [...document.querySelectorAll('[data-step]')];
+      const row = document.querySelector('[data-demo-row]');
+      const mobileStatus = document.querySelector('[data-mobile-status]');
+      const toast = document.querySelector('[data-toast]');
+      const message = document.querySelector('[data-message]');
+      const pickedBy = document.querySelector('[data-picked-by]');
+      const metrics = {
+        active: document.querySelector('[data-active-count]'),
+        pending: document.querySelector('[data-pending-count]'),
+        notified: document.querySelector('[data-notified-count]'),
+        picked: document.querySelector('[data-picked-count]')
+      };
+      let current = 0;
+      let resident = 'Ana Beatriz Silva';
+      let created = false;
+      let notified = false;
+
+      function showStep(next) {
+        current = Math.max(0, Math.min(next, steps.length - 1));
+        steps.forEach((step, index) => step.classList.toggle('active', index === current));
+        const states = ['Recebendo','Reconhecendo','Associando','Avisar','Retirada','Concluído'];
+        mobileStatus.textContent = states[current];
+        mobileStatus.className = 'demo-status ' + (current === 5 ? 'green' : current >= 3 ? 'amber' : 'teal');
+        if (current === 3 && !created) createPackage();
+        if (current === 4) pickedBy.textContent = resident;
+      }
+
+      function showToast(text) {
+        toast.textContent = text;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 2200);
+      }
+
+      function createPackage() {
+        created = true;
+        metrics.active.textContent = '39';
+        metrics.pending.textContent = '08';
+        row.className = 'demo-row';
+        row.innerHTML = `<b>CLP-9X7B-22</b><span>${resident}</span><span>Bloco 12 · 1203</span><span class="demo-status amber">Pendente</span>`;
+        message.textContent = `Olá, ${resident.split(' ')[0]}. Sua encomenda foi recebida na portaria.`;
+        showToast('Entrada criada e refletida no painel.');
+      }
+
+      document.querySelectorAll('[data-next]').forEach((button) => button.addEventListener('click', () => showStep(current + 1)));
+      document.querySelectorAll('[data-prev]').forEach((button) => button.addEventListener('click', () => showStep(current - 1)));
+      document.querySelectorAll('[data-resident]').forEach((button) => button.addEventListener('click', () => {
+        document.querySelectorAll('[data-resident]').forEach((item) => item.classList.remove('selected'));
+        button.classList.add('selected');
+        resident = button.querySelector('strong').textContent;
+      }));
+      document.querySelector('[data-notify]').addEventListener('click', () => {
+        notified = true;
+        metrics.pending.textContent = '07';
+        metrics.notified.textContent = '13';
+        if (row.classList.contains('demo-row')) row.querySelector('.demo-status').textContent = 'Avisado';
+        showToast('Aviso marcado como revisado e enviado na simulação.');
+        showStep(4);
+      });
+      document.querySelector('[data-pickup]').addEventListener('click', () => {
+        metrics.active.textContent = '38';
+        metrics.picked.textContent = '16';
+        if (row.classList.contains('demo-row')) {
+          const status = row.querySelector('.demo-status');
+          status.textContent = 'Entregue';
+          status.className = 'demo-status green';
+        }
+        showToast('Retirada registrada na linha do tempo.');
+        showStep(5);
+      });
+      document.querySelector('[data-reset]').addEventListener('click', () => {
+        created = false; notified = false; resident = 'Ana Beatriz Silva';
+        metrics.active.textContent = '38'; metrics.pending.textContent = '07'; metrics.notified.textContent = '12'; metrics.picked.textContent = '15';
+        row.className = 'demo-empty'; row.textContent = 'A nova entrada aparecerá aqui quando você concluir a associação na portaria.';
+        document.querySelectorAll('[data-resident]').forEach((item, index) => item.classList.toggle('selected', index === 0));
+        showStep(0); showToast('Demonstração reiniciada.');
+      });
+      document.querySelectorAll('[data-mode]').forEach((button) => button.addEventListener('click', () => {
+        document.querySelectorAll('[data-mode]').forEach((item) => item.setAttribute('aria-pressed','false'));
+        button.setAttribute('aria-pressed','true');
+        const mode = button.dataset.mode;
+        document.querySelectorAll('[data-surface]').forEach((surface) => {
+          surface.style.display = mode === 'both' || surface.dataset.surface === mode ? '' : 'none';
+        });
+        document.querySelector('[data-stage]').style.gridTemplateColumns = mode === 'both' ? '' : '1fr';
+      }));
+    </script>
+  </body>
+</html>
