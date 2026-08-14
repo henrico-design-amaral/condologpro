@@ -1,0 +1,43 @@
+name: Smoke public Pages demo
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "demo/**"
+      - "src/styles/demo.css"
+      - ".github/workflows/smoke-pages-demo.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: Verify published fallback demo
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Wait for GitHub Pages and verify public assets
+        run: |
+          set -euo pipefail
+          DEMO_URL="https://henrico-design-amaral.github.io/condologpro/demo/"
+          CSS_URL="https://henrico-design-amaral.github.io/condologpro/src/styles/demo.css"
+
+          for attempt in 1 2 3 4 5 6 7 8; do
+            if curl --fail --silent --show-error --location --max-time 20 "$DEMO_URL" -o /tmp/demo.html \
+              && curl --fail --silent --show-error --location --max-time 20 "$CSS_URL" -o /tmp/demo.css \
+              && grep -q "Demo funcional" /tmp/demo.html \
+              && grep -q "Veja a operação acontecer" /tmp/demo.html \
+              && grep -q "data-pickup" /tmp/demo.html \
+              && grep -q ".demo-stage" /tmp/demo.css; then
+              echo "Published Pages demo smoke passed: $DEMO_URL"
+              exit 0
+            fi
+            echo "Attempt $attempt did not see the expected published demo yet."
+            sleep 10
+          done
+
+          echo "Published Pages demo smoke failed after retries."
+          exit 1
