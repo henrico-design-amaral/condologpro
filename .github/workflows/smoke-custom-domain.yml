@@ -1,0 +1,35 @@
+name: Smoke CondoLogPro custom domain
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: Verify custom domain landing and demo
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Wait for Pages DNS/TLS and verify public experience
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 20); do
+            echo "Attempt $attempt/20"
+            if curl --fail --silent --show-error --location --max-time 20 https://condologpro.henrico.works/ -o /tmp/landing.html \
+              && curl --fail --silent --show-error --location --max-time 20 https://condologpro.henrico.works/demo/ -o /tmp/demo.html \
+              && grep -q "CondoLogPro" /tmp/landing.html \
+              && grep -q "Demo funcional" /tmp/demo.html \
+              && grep -q "data-pickup" /tmp/demo.html; then
+              echo "Custom domain smoke passed."
+              exit 0
+            fi
+            sleep 15
+          done
+          echo "Custom domain smoke failed after retries."
+          exit 1
