@@ -1,0 +1,58 @@
+{
+  "schema": "henricoops.visual-lock.v1",
+  "project": "CondoLogOPS",
+  "status": "PARTIAL",
+  "version": "1.0.0",
+  "authority": {
+    "sources": ["STYLE_GUIDE.md", "DESIGN_SYSTEM.md", "DESIGN.md", "current accepted marketing implementation", "current approved project assets/decisions"],
+    "last_reviewed": "2026-09-04"
+  },
+  "tokens": {
+    "source": "Current accepted marketing implementation; explicit machine-readable semantic token source still pending",
+    "format": "HenricoOPS semantic roles",
+    "generated_targets": []
+  },
+  "identity": {
+    "locked": ["semantic product name CondoLogOPS", "legacy CondoLogPro strings remain technical/provenance only"],
+    "bounded": ["legacy repo/domain strings only when referring to physical technical locations"],
+    "forbidden": ["use CondoLogPro as new semantic brand authority", "silent rebrand"]
+  },
+  "typography": {
+    "locked": ["current accepted marketing typography until an explicit newer decision supersedes it"],
+    "bounded": ["role scale may be promoted from repeated validated implementation values"],
+    "forbidden": ["provider-default type system", "invented typography during documentation recovery"]
+  },
+  "color": {
+    "locked": ["current accepted marketing color roles until explicitly superseded"],
+    "bounded": ["semantic tokens may be extracted/promoted from validated implementation"],
+    "forbidden": ["generic AI/SaaS neon or glass palette", "unapproved cross-brand palette"]
+  },
+  "geometry": {
+    "locked": ["clear process/evidence hierarchy", "responsive reflow without overlap/occlusion or horizontal overflow"],
+    "bounded": ["grid, spacing and container values derived from current accepted marketing implementation"],
+    "forbidden": ["invent geometry solely in production code", "compress desktop mechanically into mobile"]
+  },
+  "graphic_language": {
+    "locked": ["operational clarity and traceability", "condominium/front-desk context immediately legible", "process/evidence motifs", "product-specific visualization rather than generic dashboard cards"],
+    "bounded": ["current accepted media/icon treatment"],
+    "forbidden": ["invented product screens or metrics", "unrelated identity systems", "decorative SaaS treatment that implies unsupported maturity"]
+  },
+  "composition": {
+    "locked": ["marketing/app separation", "factual process/evidence representation", "current accepted visual anchors until superseded"],
+    "bounded": ["public marketing composition may evolve only through scoped decision/spec and visual QA"],
+    "forbidden": ["import operational-app UI wholesale into marketing", "claim production availability without evidence", "blank-canvas redesign without authority"]
+  },
+  "content_slots": [
+    {"id":"product_evidence","mode":"BOUNDED","rule":"Every process/card/diagram remains traceable to PRODUCT.md / operational authority."},
+    {"id":"marketing_copy","mode":"CONTENT_SLOT","rule":"May vary only within factual product scope; unsupported SaaS claims are blocked."},
+    {"id":"responsive_layout","mode":"FORMAT_TRANSFORM","rule":"Mobile is a designed state with no overlap/occlusion/horizontal overflow."}
+  ],
+  "format_transforms": [
+    {"id":"marketing-web","canvas":"responsive browser","rules":["visual decoupage for V2/V3", "browser prototype before acceptance", "visual/A11Y QA"]}
+  ],
+  "pattern_masters": [],
+  "baselines": [],
+  "exceptions": [
+    {"status":"OPEN_GAP","reason":"Concrete palette, typography, token values and formal Pattern Masters are still resolved indirectly from the accepted implementation rather than a complete machine-readable project system.","next_action":"Extract validated implementation values into explicit semantic tokens, register approved marketing Pattern Masters/baselines, then promote lock to READY."}
+  ]
+}
