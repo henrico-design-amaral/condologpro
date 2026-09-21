@@ -3,12 +3,14 @@
   "version": "0.2.0",
   "private": true,
   "type": "module",
-  "description": "CondoLogPro — Astro front-end reconstruction for condominium package operations.",
+  "description": "CondoLogOPS — Astro marketing surface for condominium package operations.",
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "check": "astro check"
+    "check": "astro check",
+    "sync:pages": "npm run build && node scripts/sync-pages-artifacts.mjs",
+    "verify:pages": "node scripts/verify-pages-artifacts.mjs"
   },
   "dependencies": {
     "astro": "^5.0.6"
