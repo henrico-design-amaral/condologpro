@@ -1,0 +1,45 @@
+name: Refresh published Astro artifacts
+
+on:
+  push:
+    branches:
+      - fix/pages-astro-publication-20260921
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run check
+      - run: npm run build
+      - name: Sync Pages artifacts from Astro build
+        run: |
+          rm -rf _assets visual-system
+          cp dist/index.html index.html
+          mkdir -p demo visual-system
+          cp dist/demo/index.html demo/index.html
+          cp dist/visual-system/index.html visual-system/index.html
+          if [ -d dist/_assets ]; then cp -R dist/_assets ./_assets; fi
+      - name: Commit generated public artifacts
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html demo/index.html visual-system _assets
+          if git diff --cached --quiet; then
+            echo "Published artifacts already synchronized."
+            exit 0
+          fi
+          git commit -m "chore(pages): sync published artifacts from Astro [generated]"
+          git push
