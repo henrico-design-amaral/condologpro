@@ -1,0 +1,108 @@
+{
+  "schema": "henricoops.visual-lock.v1",
+  "project": "CondoLogOPS",
+  "status": "READY",
+  "version": "1.1.0",
+  "authority": {
+    "sources": [
+      "STYLE_GUIDE.md",
+      "DESIGN_SYSTEM.md",
+      "DESIGN.md",
+      "src/styles/condologpro.css",
+      "src/pages/index.astro",
+      "src/pages/demo.astro",
+      "docs/visual/VISUAL_SYSTEM_V2.md"
+    ],
+    "last_reviewed": "2026-09-21"
+  },
+  "identity": {
+    "locked": [
+      "semantic product name CondoLogOPS",
+      "public wordmark text condologops"
+    ],
+    "bounded": [
+      "legacy condologpro repository, package and domain strings only for technical/provenance references"
+    ],
+    "forbidden": [
+      "use CondoLogPro as new public semantic brand authority",
+      "silent rebrand",
+      "unapproved cross-brand identity"
+    ]
+  },
+  "tokens": {
+    "color": {
+      "background": "#11100f",
+      "surface": "#191715",
+      "surface_2": "#211e1b",
+      "ink": "#f5f1e9",
+      "muted": "#a59c90",
+      "line": "rgba(245,241,233,.14)",
+      "primary": "#25dbc4",
+      "attention": "#ffad3d",
+      "error": "#ff5964"
+    },
+    "geometry": {
+      "shell": "min(1180px,calc(100vw - 40px))",
+      "radius": "26px",
+      "motion_ease": "cubic-bezier(.2,.8,.2,1)"
+    }
+  },
+  "typography": {
+    "ui": "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif",
+    "metadata": "ui-monospace, SFMono-Regular, Menlo, monospace",
+    "rules": [
+      "hero is the only extreme display scale",
+      "metadata and operational identifiers may use monospace",
+      "do not introduce a new decorative typeface without an explicit decision"
+    ]
+  },
+  "graphic_language": {
+    "locked": [
+      "operational clarity and traceability",
+      "process and evidence before generic SaaS decoration",
+      "teal for progression and confirmation",
+      "amber for attention",
+      "red for error or blocking",
+      "human correction remains visible"
+    ],
+    "forbidden": [
+      "generic AI/SaaS neon-glass restyle",
+      "invented production metrics presented as real",
+      "marketing decoration copied wholesale into operational app"
+    ]
+  },
+  "responsive": {
+    "locked": [
+      "mobile is a designed state",
+      "no uncontrolled horizontal overflow",
+      "reduced-motion respected",
+      "focus-visible retained"
+    ]
+  },
+  "pattern_masters": [
+    {
+      "id": "marketing-home",
+      "path": "/",
+      "source": "src/pages/index.astro",
+      "status": "APPROVED_BASELINE"
+    },
+    {
+      "id": "functional-demo",
+      "path": "/demo/",
+      "source": "src/pages/demo.astro",
+      "status": "APPROVED_SYNTHETIC_DEMO"
+    },
+    {
+      "id": "visual-review",
+      "path": "/visual-system",
+      "source": "src/pages/visual-system.astro",
+      "status": "INTERNAL_REVIEW_NO_INDEX"
+    }
+  ],
+  "exceptions": [
+    {
+      "status": "TECHNICAL_LEGACY",
+      "rule": "Repository, package and domain identifiers containing condologpro remain allowed until a deliberate infrastructure migration."
+    }
+  ]
+}
