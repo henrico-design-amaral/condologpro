@@ -1,6 +1,6 @@
-# CondoLogPro — site comercial
+# CondoLogOPS — site comercial
 
-Este repositório é a autoridade da superfície pública de marketing do CondoLogPro.
+Este repositório é a autoridade da superfície pública de marketing do CondoLogOPS.
 
 ## Limite de responsabilidade
 

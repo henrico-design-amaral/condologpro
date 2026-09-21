@@ -1,4 +1,4 @@
-name: Smoke CondoLogPro custom domain
+name: Smoke CondoLogOPS custom domain
 
 on:
   push:
@@ -23,7 +23,7 @@ jobs:
             echo "Attempt $attempt/20"
             if curl --fail --silent --show-error --location --max-time 20 https://condologpro.henrico.works/ -o /tmp/landing.html \
               && curl --fail --silent --show-error --location --max-time 20 https://condologpro.henrico.works/demo/ -o /tmp/demo.html \
-              && grep -q "CondoLogPro" /tmp/landing.html \
+              && grep -q "CondoLogOPS" /tmp/landing.html \
               && grep -q "Demo funcional" /tmp/demo.html \
               && grep -q "data-pickup" /tmp/demo.html; then
               echo "Custom domain smoke passed."
