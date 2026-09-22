@@ -3,7 +3,7 @@
   "version": "0.2.0",
   "private": true,
   "type": "module",
-  "description": "CondoLogPro — Astro front-end reconstruction for condominium package operations.",
+  "description": "CondoLogOPS — Astro front-end reconstruction for condominium package operations.",
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
